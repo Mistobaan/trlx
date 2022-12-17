@@ -47,19 +47,23 @@ def main(hparams={}):
 
         return output_data[:, -1]
 
-    fpath = "datasets/rm_labeled_single_context_pairwise.jsonl"
+    fpath = "datasets/hh-rlhf/helpful-base/train.jsonl"
     dataset = [json.loads(line) for line in open(fpath).read().splitlines()]
+    split_phrase = "\n\nAssistant:"
+    prompts = [
+        split_phrase.join(x["chosen"].split(split_phrase)[:1]) + split_phrase
+        for x in dataset
+    ]
 
-    prompts = []
-    for x in dataset:
-        chosen, rejected = x["chosen"], x["rejected"]
-        for ix, (a, b) in enumerate(zip(chosen, rejected)):
-            if a != b:
-                prompts.append(chosen[:ix])
-                break
+    fpath = "datasets/hh-rlhf/helpful-base/test.jsonl"
+    dataset = [json.loads(line) for line in open(fpath).read().splitlines()]
+    split_phrase = "\n\nAssistant: "
+    eval_prompts = [
+        split_phrase.join(x["chosen"].split(split_phrase)[:1]) + split_phrase
+        for x in dataset
+    ]
 
-    eval_prompts = prompts[-64:]
-    prompts = prompts[:-64]
+    eval_prompts = eval_prompts[:64]
 
     print(f"training... {len(prompts)}")
     trlx.train(
