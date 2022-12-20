@@ -2,10 +2,10 @@ train:
   seq_length: 1024
   epochs: 1000
   total_steps: 10000
-  batch_size: 16
+  batch_size: 8
 
   checkpoint_interval: 100000
-  eval_interval: 100
+  eval_interval: 1000
 
   pipeline: "PromptPipeline"
   orchestrator: "PPOOrchestrator"
@@ -28,7 +28,7 @@ scheduler:
   name: "cosine_annealing"
   kwargs:
     T_max: 10000 # train.total_steps
-    eta_min: 1.0e-4
+    eta_min: 8.0e-7
 
 method:
   name: "ppoconfig"
@@ -46,7 +46,7 @@ method:
   scale_reward: "running"
   ref_mean: null
   ref_std: null
-  cliprange_reward: 10
+  cliprange_reward: 20
   gen_kwargs:
     max_new_tokens: 96
     top_k: 0

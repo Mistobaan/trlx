@@ -1,27 +1,34 @@
-model:
-  model_path: "gpt2-xl"
-  tokenizer_path: "gpt2-xl"
-  model_type: "AccelerateILQLModel"
-  num_layers_unfrozen: -1
-
 train:
   seq_length: 768
-  batch_size: 8
   epochs: 1000
   total_steps: 10000
-
-  lr_init: 5.0e-5
-  lr_target: 5.0e-5
-  opt_betas: [0.9, 0.95]
-  opt_eps: 1.0e-8
-  weight_decay: 1.0e-6
+  batch_size: 16
 
   checkpoint_interval: 100000
-  eval_interval: 100
+  eval_interval: 1000
 
   pipeline: "PromptPipeline"
   orchestrator: "OfflineOrchestrator"
-  seed: 1000
+
+model:
+  model_type: "AccelerateILQLModel"
+  model_path: "gpt2-large"
+  tokenizer_path: "gpt2"
+  num_layers_unfrozen: 6
+
+optimizer:
+  name: "adamw"
+  kwargs:
+    lr: 5.0e-5
+    betas: [0.9, 0.95]
+    eps: 1.0e-8
+    weight_decay: 1.0e-6
+
+scheduler:
+  name: "cosine_annealing"
+  kwargs:
+    T_max: 10000 # train.total_steps
+    eta_min: 8.0e-7
 
 method:
   name: "ilqlconfig"
@@ -30,6 +37,10 @@ method:
   cql_scale: 0.1
   awac_scale: 1
   alpha: 0.001
-  steps_for_target_q_sync: 10
-  betas: [4]
+  steps_for_target_q_sync: 5
   two_qs: true
+  gen_kwargs:
+    max_new_tokens: 64
+    top_k: 20
+    beta: 1
+    temperature: 1.0
