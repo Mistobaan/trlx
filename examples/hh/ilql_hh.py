@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import yaml
 import trlx
@@ -46,25 +47,31 @@ def main(hparams={}):
             raise RuntimeError("No output data")
         return {"rewards": output_data[:, -1]}
 
-    fpath = "datasets/rm_labeled_single_context_pairwise.jsonl"
-    dataset = [json.loads(line) for line in open(fpath).read().splitlines()]
+    fpath = "datasets/hh-rlhf/helpful-base/test.jsonl"
+    dialogues = [json.loads(line) for line in open(fpath).read().splitlines()]
+    dialogues = sum([[x["chosen"], x["rejected"]] for x in dialogues], [])
+    dialogues = [re.split(r"(\n\nHuman: |\n\nAssistant: )", x)[1:] for x in dialogues]
+    rewards = [1, 0] * (len(dialogues) // 2)
+    prompts_responses = []
+    all_rewards = []
+    for xs, r in zip(dialogues, rewards):
+        try:
+            res = sum(
+                [
+                    [xs[ix] + xs[ix + 1] + xs[ix + 2], xs[ix + 3]]
+                    for ix in range(0, len(xs), 4)
+                ],
+                [],
+            )
+            prompts_responses.append(res)
+            all_rewards.append(r)
+        except IndexError:
+            pass
 
-    prompts, outputs, rewards = [], [], []
-    for x in dataset:
-        chosen, rejected = x["chosen"], x["rejected"]
-        for ix, (a, b) in enumerate(zip(chosen, rejected)):
-            if a != b:
-                prompts.append(chosen[:ix])
-                outputs.append(chosen[ix:])
-                rewards.append(x["chosen_reward"])
-
-                samples.append(rejected[:ix])
-                outputs.append(rejected[ix:])
-                rewards.append(x["rejected_reward"])
-                break
+    prompts = ["".join(x[:-1]) for x in prompts_responses[::2]][:64]
 
     trlx.train(
-        dataset=(prompts, outputs, rewards),
+        dataset=(prompts_responses, all_rewards),
         config=config,
         eval_prompts=prompts,
         metric_fn=metric_fn,
