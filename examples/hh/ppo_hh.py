@@ -51,7 +51,7 @@ def main(hparams={}):
     dataset = [json.loads(line) for line in open(fpath).read().splitlines()]
     split_phrase = "\n\nAssistant:"
     prompts = [
-        split_phrase.join(x["chosen"].split(split_phrase)[:1]) + split_phrase
+        split_phrase.join(x["chosen"].split(split_phrase)[:-1]) + split_phrase
         for x in dataset
     ]
 
@@ -59,7 +59,7 @@ def main(hparams={}):
     dataset = [json.loads(line) for line in open(fpath).read().splitlines()]
     split_phrase = "\n\nAssistant: "
     eval_prompts = [
-        split_phrase.join(x["chosen"].split(split_phrase)[:1]) + split_phrase
+        split_phrase.join(x["chosen"].split(split_phrase)[:-1]) + split_phrase
         for x in dataset
     ]
 
