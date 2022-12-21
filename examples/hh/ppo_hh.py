@@ -26,7 +26,7 @@ def prepare_tensor(name: str, input):
 def main(hparams={}):
     config = TRLConfig.update(default_config, hparams)
 
-    tokenizer = AutoTokenizer.from_pretrained(config.model.tokenizer_path)
+    tokenizer = AutoTokenizer.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.eos_token
     client = client_util.InferenceServerClient(url=triton_host, verbose=False)
 
