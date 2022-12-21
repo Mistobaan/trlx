@@ -26,7 +26,7 @@ def prepare_tensor(name: str, input):
 def main(hparams={}):
     config = TRLConfig.update(default_config, hparams)
 
-    tokenizer = AutoTokenizer.from_pretrained(config.model.tokenizer_path)
+    tokenizer = AutoTokenizer.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.eos_token
 
     client = client_util.InferenceServerClient(url=triton_host, verbose=False)
@@ -47,33 +47,23 @@ def main(hparams={}):
             raise RuntimeError("No output data")
         return {"rewards": output_data[:, -1]}
 
+    fpath = "datasets/hh-rlhf/helpful-base/train.jsonl"
+    dialogues = [json.loads(line) for line in open(fpath).read().splitlines()]
+    dialogues = sum([[x["chosen"], x["rejected"]] for x in dialogues], [])
+    dialogues = [re.split(r"(\n\nHuman: |\n\nAssistant: )", x)[1:] for x in dialogues]
+    dataset = [["".join(x[:-1]), x[-1]] for x in dialogues]
+    rewards = [1, 0] * (len(dialogues) // 2)
+
     fpath = "datasets/hh-rlhf/helpful-base/test.jsonl"
     dialogues = [json.loads(line) for line in open(fpath).read().splitlines()]
     dialogues = sum([[x["chosen"], x["rejected"]] for x in dialogues], [])
     dialogues = [re.split(r"(\n\nHuman: |\n\nAssistant: )", x)[1:] for x in dialogues]
-    rewards = [1, 0] * (len(dialogues) // 2)
-    prompts_responses = []
-    all_rewards = []
-    for xs, r in zip(dialogues, rewards):
-        try:
-            res = sum(
-                [
-                    [xs[ix] + xs[ix + 1] + xs[ix + 2], xs[ix + 3]]
-                    for ix in range(0, len(xs), 4)
-                ],
-                [],
-            )
-            prompts_responses.append(res)
-            all_rewards.append(r)
-        except IndexError:
-            pass
-
-    prompts = ["".join(x[:-1]) for x in prompts_responses[::2]][:64]
+    eval_prompts = ["".join(x[:-1]) for x in dialogues][:64]
 
     trlx.train(
-        dataset=(prompts_responses, all_rewards),
+        dataset=(dataset, rewards),
         config=config,
-        eval_prompts=prompts,
+        eval_prompts=eval_prompts,
         metric_fn=metric_fn,
     )
 
