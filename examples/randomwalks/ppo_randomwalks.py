@@ -53,6 +53,10 @@ default_config = TRLConfig(
 
 
 def main(hparams={}):
+    """
+    Args:
+        hparams: A dictionary of hyperparameters.
+    """
     config = TRLConfig.update(default_config, hparams)
     metric_fn, prompts, *_ = generate_random_walks(seed=config.train.seed)
 

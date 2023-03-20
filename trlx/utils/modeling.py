@@ -90,12 +90,29 @@ def rgetattr(obj, attr: str, *args) -> object:
     """
 
     def _getattr(obj, attr):
+        """Fetch an attribute from an object.
+        Args:
+            obj: The object.
+            attr: The attribute to fetch.
+        Returns:
+            The attribute of the object.
+        """
         return getattr(obj, attr, *args)
 
     return functools.reduce(_getattr, [obj] + attr.split("."))
 
 
 def findattr(obj, attrs: Tuple[str]) -> Union[object, None]:
+    """
+    Finds an attribute in an object.
+    Args:
+        obj: The object to search in.
+        attrs: The attributes to search for.
+    Returns:
+        The first attribute found.
+    Raises:
+        ValueError: If no attribute was found.
+    """
     for attr in attrs:
         if rhasattr(obj, attr):
             return rgetattr(obj, attr)
@@ -227,6 +244,15 @@ def flatten_dict(
     parent_key: str = "",
     sep: str = "/",
 ) -> dict:
+    """
+    Flatten a nested dictionary.
+    Args:
+        d: The dictionary to flatten.
+        parent_key: The key of the parent dictionary.
+        sep: The separator to use between keys.
+    Returns:
+        A flattened dictionary.
+    """
     # From: https://stackoverflow.com/a/6027615
     items = []
     for k, v in d.items():
@@ -239,6 +265,18 @@ def flatten_dict(
 
 
 def get_tensor_stats(xs: torch.Tensor, mask: torch.Tensor, n: int):
+    """
+    Args:
+        xs: A tensor of shape (N, M)
+        mask: A tensor of shape (N, M)
+        n: An integer
+    Returns:
+        A dictionary with the following keys:
+            mean: The mean of xs, masked by mask.
+            min: The minimum of xs, masked by mask.
+            max: The maximum of xs, masked by mask.
+            std: The standard deviation of xs, masked by mask.
+    """
     mean = (xs * mask).sum() / n
     return dict(
         mean=mean,
@@ -399,6 +437,12 @@ def get_delta_modified_modules(
 
 
 def get_delta_model_class(model_type: str):
+    """
+    Args:
+        model_type: The type of delta model to use.
+    Returns:
+        The delta model class.
+    """
     if not HAS_OPENDELTA:
         raise ValueError("OpenDelta package required to train with delta models. https://github.com/thunlp/OpenDelta.")
     delta_models = {
@@ -455,6 +499,13 @@ def regex_for_range(min_: int, max_: int) -> str:  # noqa
     """
 
     def split_to_patterns(min_, max_):
+        """Split a range of numbers into a list of subranges that can be expressed as a regex pattern.
+        Args:
+            min_: The minimum number in the range.
+            max_: The maximum number in the range.
+        Returns:
+            A list of subranges.
+        """
         subpatterns = []
         start = min_
         for stop in split_to_ranges(min_, max_):
@@ -463,6 +514,14 @@ def regex_for_range(min_: int, max_: int) -> str:  # noqa
         return subpatterns
 
     def split_to_ranges(min_, max_):
+        """
+        Split a range of numbers into a list of ranges.
+        Args:
+            min_: The minimum number in the range.
+            max_: The maximum number in the range.
+        Returns:
+            A list of ranges.
+        """
         stops = {max_}
         nines_count = 1
         stop = fill_by_nines(min_, nines_count)
@@ -481,12 +540,33 @@ def regex_for_range(min_: int, max_: int) -> str:  # noqa
         return stops
 
     def fill_by_nines(integer, nines_count):
+        """
+        Args:
+            integer: an integer
+            nines_count: the number of nines to add to the integer
+        Returns:
+            an integer with nines_count nines added to it
+        """
         return int(str(integer)[:-nines_count] + "9" * nines_count)
 
     def fill_by_zeros(integer, zeros_count):
+        """
+        Args:
+            integer: an integer
+            zeros_count: the number of zeros to add to the end of the integer
+        Returns:
+            the integer with zeros_count zeros added to the end of it
+        """
         return integer - integer % 10**zeros_count
 
     def range_to_pattern(start, stop):
+        """
+        Args:
+            start: The start of the range.
+            stop: The end of the range.
+        Returns:
+            A regular expression pattern that matches all numbers in the range.
+        """
         pattern = ""
         any_digit_count = 0
         for start_digit, stop_digit in zip(str(start), str(stop)):

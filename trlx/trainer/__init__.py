@@ -16,6 +16,11 @@ def register_trainer(name):
     """
 
     def register_class(cls, name):
+        """Register a class.
+        Args:
+            cls: The class to register.
+            name: The name to register the class under.
+        """
         _TRAINERS[name] = cls
         setattr(sys.modules[__name__], name, cls)
         return cls
@@ -42,6 +47,15 @@ class BaseRLTrainer:
         stop_sequences=None,
         train_mode=False,
     ):
+        """
+        Args:
+            config:
+            reward_fn:
+            metric_fn:
+            logit_mask:
+            stop_sequences:
+            train_mode:
+        """
         self.store: BaseRolloutStore = None
         self.config = config
         self.reward_fn = reward_fn
@@ -51,6 +65,10 @@ class BaseRLTrainer:
         self.stop_sequences = stop_sequences
 
     def push_to_store(self, data):
+        """Push data to the store.
+        Args:
+            data: The data to be pushed to the store.
+        """
         self.store.push(data)
 
     def add_eval_pipeline(self, eval_pipeline):

@@ -98,6 +98,12 @@ if __name__ == "__main__":
     rw_model.to(rw_device)
 
     def get_scores(samples: List[str]):
+        """
+        Args:
+            samples: List of strings.
+        Returns:
+            scores: Tensor of shape (len(samples), 2).
+        """
         scores_list = []
         batch_size = 2
         for i in range(0, len(samples), batch_size):
@@ -145,6 +151,13 @@ if __name__ == "__main__":
         return formatted_prompts
 
     def reward_fn(samples: List[str], **kwargs):
+        """
+        Args:
+            samples: A list of samples.
+            **kwargs: Additional keyword arguments.
+        Returns:
+            A list of scores.
+        """
         original_samples = [text.split("TL;DR:")[0] + "TL;DR: " for text in samples]
         original_samples = [text + post_summary_dict[text.strip()] for text in original_samples]
         original_scores = get_scores(original_samples)

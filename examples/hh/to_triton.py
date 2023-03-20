@@ -29,6 +29,11 @@ device = torch.device(args.device)
 
 class RewardModel(nn.Module):
     def __init__(self, checkpoint_path, eos_token_id):
+        """
+        Args:
+            checkpoint_path: path to the checkpoint file
+            eos_token_id: id of the end of sentence token
+        """
         super().__init__()
         model = AutoModelForCausalLM.from_pretrained(checkpoint_path)
         self.transformer = model.transformer
@@ -36,6 +41,12 @@ class RewardModel(nn.Module):
         self.eos_token_id = eos_token_id
 
     def forward(self, input_ids):
+        """
+        Args:
+            input_ids: (batch_size, max_seq_len)
+        Returns:
+            returns: (batch_size)
+        """
         states = self.transformer(input_ids)[0]
         rewards = self.v_head(states).squeeze(-1)
         ends = torch.argmax((input_ids == self.eos_token_id).float(), dim=1).view(-1, 1)

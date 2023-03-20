@@ -93,13 +93,27 @@ class LengthSampler:
     """
 
     def __init__(self, min_value, max_value):
+        """
+        Args:
+            min_value: The minimum value of the range.
+            max_value: The maximum value of the range.
+        """
         self.values = list(range(min_value, max_value))
 
     def __call__(self):
+        """
+        Returns a random value from the list of values.
+        """
         return np.random.choice(self.values)
 
 
 def main(hparams={}):
+    """
+    Args:
+        hparams: a dictionary of hyperparameters
+    Returns:
+        None
+    """
     config = TRLConfig.update(default_config, hparams)
 
     def metric_fn(samples: List[str], **kwargs) -> Dict[str, List[float]]:

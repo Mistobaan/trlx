@@ -26,6 +26,13 @@ from trlx.utils.modeling import (
 
 
 def topk_mask(xs: torch.FloatTensor, k: int):
+    """
+    Args:
+        xs: a tensor of shape (batch_size, seq_len, dim)
+        k: an integer
+    Returns:
+        a tensor of shape (batch_size, seq_len, dim)
+    """
     if k > xs.shape[-1]:
         return xs
     mintop = torch.topk(xs, k)[0][:, -1].unsqueeze(-1)
@@ -58,6 +65,14 @@ class ILQLConfig(MethodConfig):
     gen_kwargs: dict
 
     def loss(self, outputs, labels):
+        """
+        Args:
+            outputs: tuple of (logits, (qs, target_qs, vs))
+            labels: ILQLBatch
+        Returns:
+            loss: scalar
+            stats: dict
+        """
         logits, (qs, target_qs, vs) = outputs
         terminal_mask = labels.dones[:, :-1]
         n_nonterminal = max(1, terminal_mask.sum())
@@ -94,6 +109,15 @@ class ILQLConfig(MethodConfig):
         ).sum() / n_nonterminal
 
         def cql_loss(q):
+            """
+            Args:
+                q: a tensor of shape (bsize, nactions, dsize)
+            Returns:
+                loss: a scalar
+            """
+            bsize, nactions, dsize = q.shape
+            terminal_mask = (1 - terminal).float()
+            n_nonterminal = terminal_mask.sum()
             loss = F.cross_entropy(q.reshape(-1, dsize), actions.reshape(-1), reduction="none")
             loss = loss.reshape(bsize, nactions) * terminal_mask
             loss = loss.sum() / n_nonterminal
@@ -140,6 +164,14 @@ class ILQLHeads(nn.Module):
         alpha: float,
         dtype: type,
     ):
+        """
+        Args:
+            hidden_size: The size of the hidden state.
+            vocab_size: The size of the vocabulary.
+            two_qs: Whether to use two query heads.
+            alpha: The relative weight of the two query heads.
+            dtype: The data type.
+        """
         super().__init__()
 
         self.hidden_size = hidden_size
@@ -162,6 +194,16 @@ class ILQLHeads(nn.Module):
         actions_ixs: torch.Tensor = None,
         **kwargs,
     ):
+        """
+        Args:
+            hs: Tensor of shape (batch_size, seq_len, hidden_size)
+            states_ixs: Tensor of shape (batch_size, num_states)
+            actions_ixs: Tensor of shape (batch_size, num_actions)
+        Returns:
+            qs: Tuple of Tensors of shape (batch_size, num_actions)
+            target_qs: Tuple of Tensors of shape (batch_size, num_actions)
+            vs: Tensor of shape (batch_size, num_states)
+        """
         if states_ixs is not None:
             states_hs = batched_index_select(hs, states_ixs, 1)
             actions_hs = batched_index_select(hs, actions_ixs, 1)
@@ -175,11 +217,17 @@ class ILQLHeads(nn.Module):
         return qs, target_qs, vs
 
     def _sync_target_q_heads(self, alpha):
+        """
+        Synchronize the target Q-heads with the current Q-heads.
+        """
         for target_q_head, q_head in zip(self.target_q_heads, self.q_heads):
             for target_param, copy_param in zip(target_q_head.parameters(), q_head.parameters()):
                 target_param.data.copy_((alpha * copy_param.data) + (1.0 - alpha) * target_param.data)
 
     def sync_target_q_heads(self):
+        """
+        Synchronize the target Q-heads with the current Q-heads.
+        """
         if os.environ.get("DEEPSPEED_ZERO_STAGE", "0") == "3":
             params = chain(
                 chain(q_head.parameters() for q_head in self.q_heads),
@@ -213,6 +261,12 @@ class AutoModelForCausalLMWithILQLHeads(PreTrainedModelWrapper):
         two_qs: bool = True,
         alpha: float = 0.99,
     ):
+        """
+        Args:
+            base_model: The model to use as a base.
+            two_qs: Whether to use two Qs.
+            alpha: The alpha parameter for the ILQL loss.
+        """
         super().__init__(base_model)
         hidden_size = hf_get_hidden_size(self.base_model.config)
         vocab_size = self.base_model.config.vocab_size
@@ -230,6 +284,21 @@ class AutoModelForCausalLMWithILQLHeads(PreTrainedModelWrapper):
         actions_ixs=None,
         states_ixs=None,
     ):
+        """
+        Args:
+            input_ids: (torch.Tensor)
+            attention_mask: (torch.Tensor)
+            position_ids: (torch.Tensor)
+            past_key_values: (tuple)
+            actions_ixs: (torch.Tensor)
+            states_ixs: (torch.Tensor)
+        Returns:
+            logits: (torch.Tensor)
+            qs: (torch.Tensor)
+            target_qs: (torch.Tensor)
+            vs: (torch.Tensor)
+            past_key_values: (tuple)
+        """
         forward_kwargs = self.get_compatible_forward_kwargs(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -317,6 +386,9 @@ class AutoModelForCausalLMWithILQLHeads(PreTrainedModelWrapper):
         return samples
 
     def sync_target_q_heads(self):
+        """
+        Sync the target Q-heads with the current Q-heads.
+        """
         self.ilql_heads.sync_target_q_heads()
 
     def state_dict(self, *args, **kwargs):
@@ -358,6 +430,12 @@ class AutoModelForSeq2SeqLMWithILQLHeads(PreTrainedModelWrapper):
         two_qs: bool = True,
         alpha: float = 0.99,
     ):
+        """
+        Args:
+            base_model: The model to use as a base.
+            two_qs: Whether to use two Qs.
+            alpha: The alpha parameter for the ILQL loss.
+        """
         super().__init__(base_model)
         hidden_size = hf_get_hidden_size(self.base_model.config)
         vocab_size = self.base_model.config.vocab_size
@@ -367,6 +445,9 @@ class AutoModelForSeq2SeqLMWithILQLHeads(PreTrainedModelWrapper):
         self.ilql_heads = ILQLHeads(hidden_size, vocab_size, self.two_qs, self.alpha, dtype=dtype)
 
     def sync_target_q_heads(self):
+        """
+        Sync the target Q-heads with the current Q-heads.
+        """
         self.ilql_heads.sync_target_q_heads()
 
     def state_dict(self, *args, **kwargs):
@@ -405,6 +486,25 @@ class AutoModelForSeq2SeqLMWithILQLHeads(PreTrainedModelWrapper):
         output_attentions=True,
         output_hidden_states=True,
     ):
+        """
+        Args:
+            input_ids: (torch.Tensor)
+            attention_mask: (torch.Tensor)
+            decoder_input_ids: (torch.Tensor)
+            past_key_values: (tuple)
+            encoder_outputs: (tuple)
+            actions_ixs: (torch.Tensor)
+            states_ixs: (torch.Tensor)
+            output_attentions: (bool)
+            output_hidden_states: (bool)
+        Returns:
+            logits: (torch.Tensor)
+            qs: (torch.Tensor)
+            target_qs: (torch.Tensor)
+            vs: (torch.Tensor)
+            past_key_values: (tuple)
+            encoder_outputs: (tuple)
+        """
         forward_kwargs = self.get_compatible_forward_kwargs(
             input_ids=input_ids,
             attention_mask=attention_mask,
@@ -420,7 +520,11 @@ class AutoModelForSeq2SeqLMWithILQLHeads(PreTrainedModelWrapper):
 
         logits = self.base_model.lm_head(hs)
         qs, target_qs, vs = self.ilql_heads(hs, states_ixs=states_ixs, actions_ixs=actions_ixs)
-        encoder_outputs = (out.encoder_last_hidden_state, out.encoder_hidden_states, out.encoder_attentions)
+        encoder_outputs = (
+            out.encoder_last_hidden_state,
+            out.encoder_hidden_states,
+            out.encoder_attentions,
+        )
         return logits, qs, target_qs, vs, out.past_key_values, encoder_outputs
 
     def generate(

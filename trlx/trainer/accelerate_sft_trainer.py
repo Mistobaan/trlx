@@ -24,6 +24,10 @@ class SFTConfig(MethodConfig):
 @register_trainer
 class AccelerateSFTTrainer(AccelerateRLTrainer):
     def __init__(self, config: TRLConfig, **kwargs):
+        """
+        Args:
+            config: A configuration object of type TRLConfig.
+        """
         super().__init__(config, **kwargs)
 
         self.generate_kwargs = dict(
@@ -33,15 +37,34 @@ class AccelerateSFTTrainer(AccelerateRLTrainer):
         )
 
     def get_arch(self, config):
+        """
+        Args:
+            config:
+        Returns:
+            model:
+        """
         return AutoModelForCausalLM.from_pretrained(config.model.model_path)
 
     def loss(self, batch):
-        loss = self.model(input_ids=batch.input_ids, attention_mask=batch.attention_mask, labels=batch.input_ids).loss
+        """
+        Args:
+            batch: a batch of data.
+        Returns:
+            loss: the loss of the batch.
+        """
+        loss = self.model(
+            input_ids=batch.input_ids,
+            attention_mask=batch.attention_mask,
+            labels=batch.input_ids,
+        ).loss
         stats = {"loss": loss}
 
         return loss, stats
 
     def prepare_learning(self):
+        """
+        Prepare the learning process.
+        """
         train_dataloader = self.store.create_loader(self.config.train.batch_size)
         eval_dataloader = self.eval_pipeline.create_loader(self.config.train.batch_size)
 

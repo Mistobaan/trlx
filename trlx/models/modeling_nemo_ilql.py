@@ -59,6 +59,18 @@ class ParallelLinear(nn.Module):
         gather_output=True,
         input_is_parallel=False,
     ):
+        """
+        Args:
+            in_size:
+            out_size:
+            init_method:
+            use_cpu_initialization:
+            bias:
+            sequence_parallel:
+            gradient_accumulation_fusion:
+            gather_output:
+            input_is_parallel:
+        """
         super().__init__()
 
         no_async_tensor_model_parallel_allreduce = (
@@ -92,6 +104,12 @@ class ParallelLinear(nn.Module):
             )
 
     def forward(self, x):
+        """
+        Args:
+            x: input tensor.
+        Returns:
+            output: output tensor.
+        """
         output, bias = self.layer(x)
         if bias is not None:
             return output + bias
@@ -126,6 +144,13 @@ class ParallelILQLHeads(nn.Module):
         vocab_size: int,
         sequence_parallel=False,
     ):
+        """
+        Args:
+            config:
+            hidden_size:
+            vocab_size:
+            sequence_parallel:
+        """
         super().__init__()
         self.hidden_size = hidden_size
         self.vocab_size = vocab_size
@@ -140,6 +165,14 @@ class ParallelILQLHeads(nn.Module):
         self.target_q_heads.requires_grad_(False)
 
     def forward(self, hidden_states):
+        """
+        Args:
+            hidden_states: Tensor of shape (batch_size, sequence_length, hidden_size)
+        Returns:
+            qs: Tensor of shape (batch_size, sequence_length, num_heads, hidden_size)
+            target_qs: Tensor of shape (batch_size, sequence_length, num_heads, hidden_size)
+            vs: Tensor of shape (batch_size, sequence_length, hidden_size)
+        """
         qs = tuple(q_head(hidden_states) for q_head in self.q_heads)
         target_qs = tuple(q_head(hidden_states) for q_head in self.target_q_heads)
         vs = self.v_head(hidden_states)
@@ -149,16 +182,31 @@ class ParallelILQLHeads(nn.Module):
         return qs, target_qs, vs
 
     def _sync_target_q_heads(self, alpha: float):
+        """
+        Args:
+            alpha: The weight of the copy.
+        """
         for target_q_head, q_head in zip(self.target_q_heads, self.q_heads):
             for target_param, copy_param in zip(target_q_head.parameters(), q_head.parameters()):
                 target_param.data.copy_((alpha * copy_param.data) + (1.0 - alpha) * target_param.data)
 
     def sync_target_q_heads(self):
+        """
+        Args:
+            self:
+        Returns:
+            None
+        """
         self._sync_target_q_heads(self.config.alpha)
 
 
 class LMHeads(MegatronModule):
     def __init__(self, language_model, other_heads):
+        """
+        Args:
+            language_model: The language model to use.
+            other_heads: A dictionary of other heads to use.
+        """
         super().__init__()
         # must be this attribute name
         self.pre_process = language_model.pre_process
@@ -170,11 +218,20 @@ class LMHeads(MegatronModule):
         if hasattr(language_model, "word_embeddings"):
             self.word_embeddings = language_model.word_embeddings
 
-    # The tensor from the previous pipeline rank arrives via this method
     def set_input_tensor(self, input_tensor):
+        """Sets the input tensor.
+
+        The tensor from the previous pipeline rank arrives via this method
+
+        Args:
+            input_tensor: The input tensor.
+        """
         return self.language_model.set_input_tensor(input_tensor)
 
     def word_embeddings_weight(self):
+        """
+        Returns the word embeddings weight matrix.
+        """
         return self.language_model.word_embeddings_weight()
 
     def load_state_dict(self, lm_state_dict, strict=True):
@@ -188,6 +245,16 @@ class LMHeads(MegatronModule):
         forward_method_parallel_output=None,
         **kwargs,
     ):
+        """
+        Args:
+            *args:
+            get_key_value:
+            forward_method_parallel_output:
+            **kwargs:
+        Returns:
+            logits:
+            heads_output:
+        """
         lm_output = self.language_model(*args, get_key_value=get_key_value, **kwargs)
         logits = post_language_model_processing(
             lm_output,
@@ -211,6 +278,13 @@ class LMHeads(MegatronModule):
 
 
 def unwrap_float16_module(module):
+    """
+    Unwraps a Float16Module into a torch.nn.Module.
+    Args:
+        module (Float16Module): The module to unwrap.
+    Returns:
+        torch.nn.Module: The unwrapped module.
+    """
     if isinstance(module, Float16Module):
         return module.module
     return module
@@ -228,6 +302,9 @@ def reshard_for_pipeline_parallelism(num_layers, state_dict):
     encoder_layers_key = "model.language_model.encoder.layers."
 
     def filter_in_pp_rank(key):
+        """
+        Filter out keys that are not in the current process.
+        """
         if key.startswith(encoder_layers_key):
             layer_idx = int(key.split(".")[4])
             return pp_offset <= layer_idx < (pp_offset + stage_layers)
@@ -254,6 +331,12 @@ class ILQLGPT(MegatronGPTModel):
     ilql_config: ILQLConfig
 
     def __init__(self, ilql_config, metric_fn=None, **kwargs):
+        """
+        Args:
+            ilql_config:
+            metric_fn:
+            **kwargs:
+        """
         self.ilql_config = ilql_config
         self.metric_fn = metric_fn
         super().__init__(**kwargs)
@@ -266,12 +349,38 @@ class ILQLGPT(MegatronGPTModel):
 
     @classmethod
     def list_available_models(cls) -> Optional[Mapping[str, str]]:
+        """Fetch rows from a Bigtable.
+
+        Args:
+            cls: The class.
+
+        Returns:
+            A dict mapping model names to versions.
+        """
         return None
 
     def build_train_valid_test_datasets(self):
+        """
+        Builds the train, validation and test datasets.
+        Args:
+            self: The object itself.
+        Returns:
+            train_dataset: The train dataset.
+            valid_dataset: The validation dataset.
+            test_dataset: The test dataset.
+        """
         pass
 
     def build_data_loader(self, dataset, collate_fn, consumed_samples=0):
+        """
+        Builds a data loader for the given dataset.
+        Args:
+            dataset (torch.utils.data.Dataset): The dataset to build a data loader for.
+            collate_fn (callable): The collate function to use.
+            consumed_samples (int): The number of samples that have already been consumed.
+        Returns:
+            torch.utils.data.DataLoader: The data loader.
+        """
         dp_rank = parallel_state.get_data_parallel_rank()
         dp_size = parallel_state.get_data_parallel_world_size()
         print(
@@ -298,23 +407,55 @@ class ILQLGPT(MegatronGPTModel):
         )
 
     def set_train_dataset(self, train_dataset, collate_fn):
+        """
+        Set the train dataset.
+        Args:
+            train_dataset (torch.utils.data.Dataset): The train dataset.
+            collate_fn (callable): The collate function.
+        """
         self._train_dataset = train_dataset
         self._train_collate_fn = collate_fn
 
     def set_valid_dataset(self, valid_dataset, collate_fn):
+        """
+        Set the validation dataset.
+        Args:
+            valid_dataset (torch.utils.data.Dataset): The validation dataset.
+            collate_fn (callable): The collate function.
+        """
         self._valid_dataset = valid_dataset
         self._valid_collate_fn = collate_fn
 
-    # Called by superclass to build data loaders
     def setup_training_data(self, _):
+        """
+        Args:
+            _:
+        Returns:
+            _:
+        Raises:
+            _:
+        """
         if hasattr(self, "_train_dataset"):
             self._train_dl = self.build_data_loader(self._train_dataset, self._train_collate_fn)
 
     def setup_validation_data(self, _):
+        """
+        Args:
+            _:
+        Returns:
+            _:
+        Raises:
+            _:
+        """
         if hasattr(self, "_valid_dataset"):
             self._validation_dl = self.build_data_loader(self._valid_dataset, self._valid_collate_fn)
 
     def load_from_pretrained(self, checkpoint_dir):
+        """
+        Loads the model from a pretrained checkpoint.
+        Args:
+            checkpoint_dir: The directory where the pretrained checkpoint is stored.
+        """
         mp_rank = parallel_state.get_tensor_model_parallel_rank()
         rank_subfolder = f"mp_rank_{mp_rank:02d}"
         rank_params = Path(checkpoint_dir) / rank_subfolder / "model_weights.ckpt"
@@ -403,13 +544,19 @@ class ILQLGPT(MegatronGPTModel):
         # handle asynchronous grad reduction
         if self.with_distributed_adam:
             if self.megatron_amp_o2:
-                # copy grads to main grad
+
                 def custom_sync_context_handler():
+                    """
+                    This function is used to handle the sync context.
+                    """
                     return self._optimizer.no_sync(greedy_grad_copy=True)
 
             else:
-                # keep grad tensors around
+
                 def custom_sync_context_handler():
+                    """
+                    This function is used to sync the context.
+                    """
                     return self._optimizer.no_sync(greedy_grad_copy=False)
 
         else:
@@ -510,6 +657,12 @@ class ILQLGPT(MegatronGPTModel):
         return loss_mean
 
     def activation_checkpointing_(self, enable: bool):
+        """
+        Enable or disable activation checkpointing.
+        Args:
+            enable: True to enable, False to disable.
+        """
+
         def toggle_checkpointing(module):
             if hasattr(module, "activations_checkpoint_granularity"):
                 if enable:
@@ -540,8 +693,11 @@ class ILQLGPT(MegatronGPTModel):
             self.cfg.activations_checkpoint_method = None
             self.cfg.activations_checkpoint_num_layers = None
 
-    # TODO: replace this with less magical code
     def sequence_parallel_(self, enabled: bool):
+        """
+        Args:
+            enabled:
+        """
         self.cfg.sequence_parallel = enabled
 
         def toggle_sp(m):
@@ -560,6 +716,14 @@ class ILQLGPT(MegatronGPTModel):
         self.model.apply(toggle_sp)
 
     def validation_step(self, batch: Tuple[List[int], List[int]], batch_idx: int):
+        """
+        Args:
+            batch: A tuple of (input_ids, lengths)
+            batch_idx: The index of the batch.
+        Returns:
+            avg_metrics: A dictionary of average metrics.
+            rows: A tuple of (rows, columns)
+        """
         if self.metric_fn is None:
             raise ValueError("Must set metric_fn to use validation")
 
@@ -613,6 +777,10 @@ class ILQLGPT(MegatronGPTModel):
         return avg_metrics, (rows, columns)
 
     def validation_epoch_end(self, outputs: List[Tuple[dict, Tuple[List[str], List[str]]]]):
+        """
+        Args:
+            outputs: List of tuples (metrics, tables)
+        """
         metrics, tables = zip(*outputs)
         _, columns = tables[0]
         rows = [r for trows, _ in tables for r in trows]
@@ -631,12 +799,23 @@ class ILQLGPT(MegatronGPTModel):
                 sync_dist=True,
             )
 
-    # Need to override this otherwise distributed fused adam won't work
-    # with frozen layers
     def parameters(self):
+        """
+        Returns an iterator over module parameters.
+        This is typically passed to an optimizer.
+        """
         return (p for p in self.model.parameters() if p.requires_grad)
 
     def get_forward_output_and_loss_func(self, validation_step=False):
+        """
+        Args:
+            self:
+            validation_step:
+
+        Returns:
+
+        """
+
         def fwd_output_and_loss_func(batch: List[torch.Tensor], model, checkpoint_activations_all_layers=None):
             # On first and last pipeline stages, the input data is passed in
             if batch is not None:
@@ -715,6 +894,13 @@ class ILQLGPT(MegatronGPTModel):
         inference_max_sequence_len=None,
         checkpoint_activations_all_layers=None,
     ):
+        """
+        Args:
+            set_inference_key_value_memory:
+            inference_max_sequence_len:
+            checkpoint_activations_all_layers:
+        """
+
         def fwd_output_only_func(
             batch: torch.Tensor,
             model,
@@ -771,6 +957,15 @@ class ILQLGPT(MegatronGPTModel):
         length_params: LengthParam,
         sampling_params: SamplingParam = None,
     ) -> OutputType:
+        """
+        Generate a sequence of tokens given a starting sequence.
+        Args:
+            inputs: The starting sequence.
+            length_params: The length parameters for the generation.
+            sampling_params: The sampling parameters for the generation.
+        Returns:
+            The generated sequence.
+        """
         if sampling_params is None:
             sampling_params = {
                 "use_greedy": False,

@@ -94,6 +94,14 @@ meteor = evaluate.load("meteor")  # use meteor as the reward function
 if __name__ == "__main__":
 
     def reward_fn(samples: List[str], prompts: List[str], outputs: List[str]):
+        """
+        Args:
+            samples: A list of samples.
+            prompts: A list of prompts.
+            outputs: A list of outputs.
+        Returns:
+            A list of scores.
+        """
         original_summaries = [prompt_label[prompt.strip()] for prompt in prompts]
         scores = [
             meteor.compute(predictions=[output.strip()], references=[original])["meteor"]

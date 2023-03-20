@@ -62,10 +62,20 @@ class PromptPipeline(BasePipeline):
     """
 
     def __init__(self, prompts: List[str], max_prompt_length: int, tokenizer: PreTrainedTokenizer):
+        """
+        Args:
+            prompts: List of prompts to generate from.
+            max_prompt_length: Maximum length of the prompt.
+            tokenizer: Tokenizer to use.
+        """
         super().__init__()
 
         model_inputs = tokenizer(
-            prompts, truncation=True, padding=False, max_length=max_prompt_length, add_special_tokens=False
+            prompts,
+            truncation=True,
+            padding=False,
+            max_length=max_prompt_length,
+            add_special_tokens=False,
         )
 
         prompts_tokens = model_inputs["input_ids"]
@@ -77,17 +87,40 @@ class PromptPipeline(BasePipeline):
         ]
 
     def __getitem__(self, ix: int):
+        """
+        Args:
+            ix: The index of the prompt to fetch.
+        Returns:
+            The prompt at the given index.
+        Raises:
+            IndexError: If the index is out of range.
+        """
         return self.prompts[ix]
 
     def __len__(self) -> int:
+        """Return the number of prompts in the prompt list."""
         return len(self.prompts)
 
     def create_loader(self, batch_size: int, shuffle=False) -> DataLoader:
+        """
+        Args:
+            batch_size: The size of the batches to be created.
+            shuffle: Whether to shuffle the data before batching.
+        Returns:
+            A DataLoader for the dataset.
+        """
         collate_fn = DataCollatorWithPadding(self.tokenizer) if self.tokenizer else torch.vstack
         return DataLoader(self, batch_size=batch_size, collate_fn=collate_fn, shuffle=shuffle)
 
 
 def ilql_collate_fn(elems: Iterable[ILQLElement]):
+    """
+    This function is used to collate a list of ILQLElements into a single ILQLBatch.
+    Args:
+        elems: A list of ILQLElements.
+    Returns:
+        An ILQLBatch.
+    """
     return ILQLBatch(
         pad_sequence([x.input_ids for x in elems], batch_first=True, padding_value=0),
         pad_sequence([x.attention_mask for x in elems], batch_first=True, padding_value=0),
@@ -104,6 +137,15 @@ class ILQLRolloutStorage(BaseRolloutStore):
     """
 
     def __init__(self, input_ids, attention_mask, rewards, states_ixs, actions_ixs, dones):
+        """
+        Args:
+            input_ids:
+            attention_mask:
+            rewards:
+            states_ixs:
+            actions_ixs:
+            dones:
+        """
         super().__init__()
 
         self.input_ids = input_ids
@@ -114,6 +156,12 @@ class ILQLRolloutStorage(BaseRolloutStore):
         self.dones = dones
 
     def __getitem__(self, ix: int) -> ILQLElement:
+        """
+        Args:
+            ix: index of the element to return.
+        Returns:
+            ILQLElement: the element at the given index.
+        """
         return ILQLElement(
             self.input_ids[ix],
             self.attention_mask[ix],
@@ -124,9 +172,18 @@ class ILQLRolloutStorage(BaseRolloutStore):
         )
 
     def __len__(self) -> int:
+        """
+        Returns the length of the input_ids.
+        """
         return len(self.input_ids)
 
     def create_loader(self, batch_size: int, drop_last=True):
+        """
+        Args:
+            batch_size:
+            drop_last:
+        Returns:
+        """
         return DataLoader(
             self,
             batch_size=batch_size,
@@ -137,6 +194,13 @@ class ILQLRolloutStorage(BaseRolloutStore):
 
 
 def ilql_seq2seq_collate_fn(elems: Iterable[ILQLElement]):
+    """
+    This function is used to collate a list of ILQLElements into a single batch.
+    Args:
+        elems: A list of ILQLElements.
+    Returns:
+        A single batch of ILQLElements.
+    """
     return ILQLSeq2SeqBatch(
         pad_sequence([x.input_ids for x in elems], batch_first=True, padding_value=0),
         pad_sequence([x.attention_mask for x in elems], batch_first=True, padding_value=0),
@@ -153,7 +217,26 @@ class ILQLSeq2SeqRolloutStorage(BaseRolloutStore):
     Rollout storage for training ILQL
     """
 
-    def __init__(self, input_ids, attention_mask, decoder_input_ids, rewards, states_ixs, actions_ixs, dones):
+    def __init__(
+        self,
+        input_ids,
+        attention_mask,
+        decoder_input_ids,
+        rewards,
+        states_ixs,
+        actions_ixs,
+        dones,
+    ):
+        """
+        Args:
+            input_ids:
+            attention_mask:
+            decoder_input_ids:
+            rewards:
+            states_ixs:
+            actions_ixs:
+            dones:
+        """
         super().__init__()
 
         self.input_ids = input_ids
@@ -165,6 +248,12 @@ class ILQLSeq2SeqRolloutStorage(BaseRolloutStore):
         self.dones = dones
 
     def __getitem__(self, ix: int) -> ILQLElement:
+        """
+        Args:
+            ix: index of the element to return.
+        Returns:
+            ILQLElement: the element at the given index.
+        """
         return ILQLSeq2SeqElement(
             self.input_ids[ix],
             self.attention_mask[ix],
@@ -176,9 +265,18 @@ class ILQLSeq2SeqRolloutStorage(BaseRolloutStore):
         )
 
     def __len__(self) -> int:
+        """
+        Returns the length of the input_ids.
+        """
         return len(self.input_ids)
 
     def create_loader(self, batch_size: int, drop_last=True):
+        """
+        Args:
+            batch_size:
+            drop_last:
+        Returns:
+        """
         return DataLoader(
             self,
             batch_size=batch_size,

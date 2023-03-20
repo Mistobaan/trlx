@@ -61,14 +61,23 @@ def _get_default_logging_level():
 
 
 def _get_library_name() -> str:
+    """
+    Returns the name of the library.
+    """
     return __name__.split(".")[0]
 
 
 def _get_library_root_logger() -> logging.Logger:
+    """
+    Returns the root logger for the library.
+    """
     return logging.getLogger(_get_library_name())
 
 
 def _configure_library_root_logger() -> None:
+    """Configure the library root logger.
+    This function is called automatically when the library is loaded.
+    """
     global _default_handler
 
     with _lock:
@@ -86,6 +95,7 @@ def _configure_library_root_logger() -> None:
 
 
 def _reset_library_root_logger() -> None:
+    """Reset the library root logger to its initial state."""
     global _default_handler
 
     with _lock:
@@ -99,6 +109,15 @@ def _reset_library_root_logger() -> None:
 
 
 def get_log_levels_dict():
+    """
+    Returns a dictionary of log levels.
+    Args:
+        None
+    Returns:
+        log_levels: A dictionary of log levels.
+    Raises:
+        None
+    """
     return log_levels
 
 
@@ -120,6 +139,13 @@ class MultiProcessAdapter(logging.LoggerAdapter):
             self.logger._log(level, msg, args, **kwargs)
 
     def process(self, msg, kwargs):
+        """
+        Args:
+            msg: The message to be processed.
+            kwargs: The keyword arguments.
+        Returns:
+            The processed message.
+        """
         this_rank = torch.distributed.get_rank() if torch.distributed.is_initialized() else 0
         return f"[RANK {this_rank}] {msg}", kwargs
 
@@ -282,20 +308,51 @@ class EmptyTqdm:
         self._iterator = args[0] if args else None
 
     def __iter__(self):
+        """Return an iterator over the rows in this table.
+
+        The rows are returned in order, starting from the first row of this
+        table.
+
+        This method implements Python's iterator protocol, meaning that it
+        can be used in a ``for`` loop. For example::
+
+            for row in table:
+                print(row)
+
+        Args:
+            None.
+
+        Returns:
+            An iterator used to iterate over the rows in this table.
+
+        Raises:
+            :class:`ValueError <exceptions.ValueError>` if the table is
+            already being iterated over.
+        """
         return iter(self._iterator)
 
     def __getattr__(self, _):
         """Return empty function."""
 
-        def empty_fn(*args, **kwargs):  # pylint: disable=unused-argument
+        def empty_fn(*args, **kwargs):
+            """
+            This function does nothing.
+            """  # pylint: disable=unused-argument
             return
 
         return empty_fn
 
     def __enter__(self):
+        """Enter the runtime context related to this object.
+        The with statement will bind this method's return value
+        to the target(s) specified in the as clause of the statement, if any.
+        """
         return self
 
     def __exit__(self, type_, value, traceback):
+        """
+        Exit a with statement.
+        """
         return
 
 
@@ -304,17 +361,32 @@ _tqdm_active = True
 
 class _tqdm_cls:
     def __call__(self, *args, **kwargs):
+        """
+        Args:
+            *args:
+            **kwargs:
+        Returns:
+            tqdm_lib.tqdm(*args, **kwargs)
+        """
         if _tqdm_active:
             return tqdm_lib.tqdm(*args, **kwargs)
         else:
             return EmptyTqdm(*args, **kwargs)
 
     def set_lock(self, *args, **kwargs):
+        """
+        Set the lock to use for the tqdm instance.
+        Args:
+            lock: the lock to use.
+        """
         self._lock = None
         if _tqdm_active:
             return tqdm_lib.tqdm.set_lock(*args, **kwargs)
 
     def get_lock(self):
+        """
+        Returns the lock object.
+        """
         if _tqdm_active:
             return tqdm_lib.tqdm.get_lock()
 

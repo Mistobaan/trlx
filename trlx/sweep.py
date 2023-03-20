@@ -13,6 +13,13 @@ from trlx.ray_tune.wandb import create_report, log_trials
 
 
 def tune_function(train_function, param_space: dict, tune_config: dict, resources: dict):
+    """
+    Args:
+        train_function: A function that takes a config and returns a score.
+        param_space: A dictionary of parameter names to distributions.
+        tune_config: A dictionary of configuration parameters for Tune.
+        resources: A dictionary of resources to allocate to each trial.
+    """
     tuner = tune.Tuner(
         tune.with_resources(train_function, resources=resources),
         param_space=param_space,

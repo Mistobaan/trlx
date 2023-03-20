@@ -30,6 +30,10 @@ logger = logging.get_logger(__name__)
 @register_trainer
 class AccelerateILQLTrainer(AccelerateRLTrainer):
     def __init__(self, config: TRLConfig, **kwargs):
+        """
+        Args:
+            config: A configuration object.
+        """
         super().__init__(config, **kwargs)
 
         if not isinstance(config.method, ILQLConfig):
@@ -46,6 +50,12 @@ class AccelerateILQLTrainer(AccelerateRLTrainer):
         )
 
     def get_arch(self, config):
+        """
+        Args:
+            config:
+        Returns:
+            model:
+        """
         if config.model.model_arch_type == "seq2seq":
             from_fn = AutoModelForSeq2SeqLMWithILQLHeads.from_pretrained
             if issubclass(type(config.model.model_path), transformers.PretrainedConfig):
@@ -61,10 +71,19 @@ class AccelerateILQLTrainer(AccelerateRLTrainer):
         )
 
     def post_backward_callback(self):
+        """
+        This function is called after the backward pass.
+        """
         if self.iter_count % self.config.method.steps_for_target_q_sync == 0:
             self.accelerator.unwrap_model(self.model).sync_target_q_heads()
 
     def loss(self, batch: Union[ILQLBatch, ILQLSeq2SeqBatch]):
+        """
+        Args:
+            batch: A batch of data.
+        Returns:
+            The loss of the batch.
+        """
         batch = to_device(batch, self.accelerator.device)
         if self.config.model.model_arch_type == "seq2seq":
             logits, qs, target_qs, vs, _, _ = self.model(
@@ -85,6 +104,9 @@ class AccelerateILQLTrainer(AccelerateRLTrainer):
         return self.ilql.loss((logits, (qs, target_qs, vs)), batch)
 
     def prepare_learning(self):
+        """
+        Prepare the learning process.
+        """
         train_dataloader = self.store.create_loader(self.config.train.batch_size)
         eval_dataloader = self.eval_pipeline.create_loader(self.config.train.batch_size)
 
@@ -145,7 +167,11 @@ class AccelerateILQLTrainer(AccelerateRLTrainer):
         if os.environ.get("RANK", "0") == "0":
             logger.info("Logging experience string statistics")
             columns = ["Prompt Length", "Output Length", "Sample Length"]
-            table = Table(*columns, title="Experience String Stats (mean ∈ \[min, max])", show_lines=True)
+            table = Table(
+                *columns,
+                title="Experience String Stats (mean ∈ \[min, max])",
+                show_lines=True,
+            )
             row = []
             for lengths in [prompt_lengths, output_lengths, sample_lengths]:
                 row.append(f"{lengths.mean():.2f} ∈ [{min(lengths)}, {max(lengths)}]")
@@ -218,7 +244,11 @@ class AccelerateILQLTrainer(AccelerateRLTrainer):
         if os.environ.get("RANK", "0") == "0":
             logger.info("Logging experience string statistics")
             columns = ["Prompt Length", "Output Length", "Sample Length"]
-            table = Table(*columns, title="Experience String Stats (mean ∈ \[min, max])", show_lines=True)
+            table = Table(
+                *columns,
+                title="Experience String Stats (mean ∈ \[min, max])",
+                show_lines=True,
+            )
             row = []
             for lengths in [prompt_lengths, output_lengths, sample_lengths]:
                 row.append(f"{lengths.mean():.2f} ∈ [{min(lengths)}, {max(lengths)}]")

@@ -53,6 +53,11 @@ class PreTrainedModelWrapper(nn.Module, transformers.utils.PushToHubMixin):
     _supported_args: List[str] = None
 
     def __init__(self, base_model: Optional[transformers.PreTrainedModel] = None, **kwargs):
+        """
+        Args:
+            base_model: The base model to use.
+            **kwargs: Additional keyword arguments.
+        """
         super().__init__()
         self.base_model = base_model
         # cache `forward` args for general use (avoids incompatible args across architectures)
@@ -127,7 +132,10 @@ class PreTrainedModelWrapper(nn.Module, transformers.utils.PushToHubMixin):
         if isinstance(pretrained_model_name_or_path, str):
             # Load the base model using the `transformers` AutoClass (e.g. AutoModelForCausalLM)
             base_model = cls._auto_model_parent_class.from_pretrained(
-                pretrained_model_name_or_path, *model_args, revision=revision, **from_pretrained_kwargs
+                pretrained_model_name_or_path,
+                *model_args,
+                revision=revision,
+                **from_pretrained_kwargs,
             )
         elif isinstance(pretrained_model_name_or_path, transformers.PreTrainedModel):
             base_model = pretrained_model_name_or_path
@@ -146,7 +154,11 @@ class PreTrainedModelWrapper(nn.Module, transformers.utils.PushToHubMixin):
 
             if not os.path.exists(filename):
                 try:
-                    filename = hf_hub_download(pretrained_model_name_or_path, "pytorch_model.bin", revision=revision)
+                    filename = hf_hub_download(
+                        pretrained_model_name_or_path,
+                        "pytorch_model.bin",
+                        revision=revision,
+                    )
                 # Sharded
                 except Exception:
                     if os.path.exists(sharded_index_filename):

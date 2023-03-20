@@ -16,6 +16,10 @@ default_config = default_ilql_config()
 
 
 def main(hparams={}):
+    """
+    Args:
+        hparams: A dictionary of hyperparameters.
+    """
     # Merge sweep config with default config if given
 
     config = default_config.evolve(

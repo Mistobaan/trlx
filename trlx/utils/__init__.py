@@ -146,6 +146,9 @@ class Clock:
     """
 
     def __init__(self):
+        """
+        Initialize the timer.
+        """
         self.start = time.time()
         self.total_time = 0
         self.total_samples = 0

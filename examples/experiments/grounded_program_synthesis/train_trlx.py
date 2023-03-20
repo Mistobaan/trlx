@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 
 class DSLDataset:
     def __init__(self):
+        """
+        Initialize the dataset.
+        """
         with open("dataset/train.json", "r") as f:
             self.train_data = json.load(f)
         with open("dataset/test.json", "r") as f:
@@ -20,6 +23,13 @@ class DSLDataset:
         logger.info("Successfully loaded the dataset")
 
     def load_datapoints(self, split="train"):
+        """
+        Loads the datapoints for the given split.
+        Args:
+            split: The split to load.
+        Returns:
+            A generator of datapoints.
+        """
         if split == "train":
             for datapoint in self.train_data:
                 if "ERROR" not in datapoint["input"]:
@@ -33,6 +43,13 @@ interpreter = Interpreter()
 
 
 def reward_fn(samples, **kwargs):
+    """
+    Args:
+        samples: A list of samples.
+        **kwargs: Additional keyword arguments.
+    Returns:
+        A list of rewards.
+    """
     reward_list = []
     for sample in samples:
         code = sample.split("Function:")[1].strip()
@@ -59,6 +76,10 @@ with config_path.open() as f:
 
 
 def main(hparams={}):
+    """
+    Args:
+        hparams: A dictionary of hyperparameters.
+    """
     config = TRLConfig.update(default_config, hparams)
 
     # Dataset

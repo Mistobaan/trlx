@@ -57,6 +57,10 @@ SFT_MODEL_PATH = "CarperAI/openai_summarize_tldr_sft"
 
 
 def main(hparams={}):
+    """
+    Args:
+        hparams: A dictionary of hyperparameters.
+    """
     config = TRLConfig.update(default_config, hparams)
 
     rw_tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-j-6B")

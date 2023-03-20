@@ -71,6 +71,17 @@ elif config_name == "20B":
 
 
 def preprocess(sample):
+    """
+    Args:
+        sample: a dictionary with keys:
+            "prompt": a string
+            "chosen": a string
+            "rejected": a string
+    Returns:
+        sample: a dictionary with keys:
+            "prompt_output": a list of lists of strings
+            "reward": a list of integers
+    """
     sample["prompt_output"] = [
         [sample["prompt"], sample["chosen"]],
         [sample["prompt"], sample["rejected"]],
@@ -80,6 +91,10 @@ def preprocess(sample):
 
 
 def main(hparams={}):
+    """
+    Args:
+        hparams: A dict of hyperparameters.
+    """
     config = TRLConfig.update(default_config, hparams)
 
     dataset = load_dataset("Dahoas/full-hh-rlhf").map(preprocess)

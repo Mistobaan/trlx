@@ -29,6 +29,16 @@ ray_info = [
 
 
 def parse_result(result):
+    """
+    Parse the result of a Ray experiment.
+
+    Args:
+        result: The result of a Ray experiment.
+
+    Returns:
+        A dictionary containing the results of the experiment.
+    """
+    ray_info = ["config", "pid", "start_time", "node_ip", "experiment_tag", "resources"]
     out = {}
     for k, v in result.items():
         if isinstance(v, (int, float)) and not k.startswith("config.") and k not in ray_info:
@@ -38,6 +48,12 @@ def parse_result(result):
 
 
 def log_trials(trial_path: str, project_name: str):
+    """
+    Logs hyperopt trials to wandb.
+    Args:
+        trial_path: Path to the hyperopt trials directory.
+        project_name: Name of the wandb project.
+    """
     trial_path = Path(trial_path)
     files = os.listdir(trial_path)
 
@@ -76,7 +92,28 @@ def log_trials(trial_path: str, project_name: str):
 
 
 def create_report(project_name, param_space, tune_config, trial_path, best_config=None):
+    """
+    Create a report for a hyperparameter optimization experiment.
+
+    Args:
+        project_name (str): The name of the project.
+        param_space (dict): The parameter space.
+        tune_config (dict): The tune config.
+        trial_path (str): The trial path.
+        best_config (dict): The best config.
+
+    Returns:
+        None
+    """
+
     def get_parallel_coordinate(param_space, metric):
+        """
+        Args:
+            param_space: A dictionary of parameter names and their values.
+            metric: The name of the metric to plot.
+        Returns:
+            A ParallelCoordinatesPlot object.
+        """
         column_names = list(param_space.keys())
         columns = [wb.PCColumn(column) for column in column_names]
 
@@ -86,6 +123,12 @@ def create_report(project_name, param_space, tune_config, trial_path, best_confi
         )
 
     def get_param_importance(metric):
+        """
+        Args:
+            metric: The metric to use for the parameter importance plot.
+        Returns:
+            A parameter importance plot.
+        """
         return wb.ParameterImportancePlot(
             # Get it from the metric name.
             with_respect_to=metric,
@@ -93,6 +136,12 @@ def create_report(project_name, param_space, tune_config, trial_path, best_confi
         )
 
     def get_scatter_plot(metric):
+        """
+        Args:
+            metric: The metric to plot.
+        Returns:
+            A scatter plot of the metric.
+        """
         return wb.ScatterPlot(
             # Get it from the metric name.
             title=f"{metric} v. Index",
@@ -104,6 +153,15 @@ def create_report(project_name, param_space, tune_config, trial_path, best_confi
         )
 
     def get_metrics_with_history(project_name, group_name, entity=None):
+        """
+        Args:
+            project_name (str): The name of the project.
+            group_name (str): The name of the group.
+            entity (str): The name of the entity.
+        Returns:
+            metrics (list): The list of metrics.
+        """
+
         entity_project = f"{entity}/{project_name}" if entity else project_name
         api = wandb.Api()
         runs = api.runs(entity_project)

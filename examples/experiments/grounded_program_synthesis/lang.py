@@ -10,6 +10,14 @@ from transformers import AutoTokenizer
 
 
 def init_random_input(len_range: int = 5, value_gen=5) -> list:
+    """
+    This function generates a list of random integers.
+    Args:
+        len_range: The length of the list.
+        value_gen: The range of the values in the list.
+    Returns:
+        A list of random integers.
+    """
     len_gen = random.randint(2, len_range + 1)
     value_range = list(range(-value_gen, value_gen + 1))
     output = []
@@ -22,53 +30,157 @@ def init_random_input(len_range: int = 5, value_gen=5) -> list:
 const_integer = [-5, -4, -3, -2, -1, 1, 2, 3, 4, 5]
 
 
-# Functions in the DSL
-# Each function defines a transformation in the given DSL Grammar.
 def take(input_list: list, n: int) -> list:
+    """
+    Take the first n elements of a list.
+    Args:
+        input_list: A list of elements.
+        n: The number of elements to take.
+    Returns:
+        A list of the first n elements of input_list.
+    Raises:
+        ValueError: If n is negative.
+    """
     return input_list[:n]
 
 
 def drop(input_list: list, n: int) -> list:
+    """
+    Drop the first n elements from the input list.
+    Args:
+        input_list: A list of elements.
+        n: The number of elements to drop.
+    Returns:
+        A list of elements.
+    Raises:
+        ValueError: If n is greater than the length of input_list.
+    """
     return input_list[n:]
 
 
 def minimum(input_list: list) -> int:
+    """
+    Returns the minimum value in a list.
+    Args:
+        input_list: A list of integers.
+    Returns:
+        The minimum value in the list.
+    Raises:
+        ValueError: If the list is empty.
+    """
     return min(input_list)
 
 
 def maximum(input_list: list) -> int:
+    """
+    Finds the maximum value in a list.
+    Args:
+        input_list: A list of integers.
+    Returns:
+        The maximum value in the list.
+    Raises:
+        ValueError: If the list is empty.
+    """
     return max(input_list)
 
 
 def reverse(input_list: list) -> list:
+    """
+    Reverses the order of the elements in the list.
+    Args:
+        input_list: The list to be reversed.
+    Returns:
+        The reversed list.
+    """
     return input_list[::-1]
 
 
 def sort_asc(input_list: list) -> list:
+    """
+    Sort a list in ascending order.
+    Args:
+        input_list: A list of numbers.
+    Returns:
+        A list of numbers sorted in ascending order.
+    Raises:
+        TypeError: If input_list is not a list.
+    """
     return sorted(input_list)
 
 
 def sort_des(input_list: list) -> list:
+    """
+    Sort a list in descending order.
+    Args:
+        input_list: A list of numbers.
+    Returns:
+        A list of numbers sorted in descending order.
+    Raises:
+        TypeError: If input_list is not a list.
+    """
     return sorted(input_list, reverse=True)
 
 
 def add_n(input_list: list, n: int) -> list:
+    """
+    Add n to each element of the input list.
+    Args:
+        input_list: a list of numbers.
+        n: a number.
+    Returns:
+        A list of each number in input_list, plus n.
+    Raises:
+        TypeError: if input_list is not a list.
+        TypeError: if n is not an int.
+    """
     return [x + n for x in input_list]
 
 
 def sub_n(input_list: list, n: int) -> list:
+    """
+    Subtract n from each element of the input list.
+    Args:
+        input_list: The list to be modified.
+        n: The number to subtract from each element of the list.
+    Returns:
+        A new list with the elements of the input list minus n.
+    """
     return [x - n for x in input_list]
 
 
 def mul_n(input_list: list, n: int) -> list:
+    """
+    Multiply each element in the input list by n.
+    Args:
+        input_list: A list of integers.
+        n: An integer.
+    Returns:
+        A list of integers.
+    """
     return [x * n for x in input_list]
 
 
 def div_n(input_list: list, n: int) -> list:
+    """
+    Divides each element in the input list by n.
+    Args:
+        input_list: A list of numbers.
+        n: A number.
+    Returns:
+        A list of numbers.
+    Raises:
+        ZeroDivisionError: If n is zero.
+    """
     return [x / n for x in input_list]
 
 
 def expand_copy(input_list: list) -> list:
+    """
+    Args:
+        input_list: a list of integers.
+    Returns:
+        a list of integers.
+    """
     return input_list + input_list
 
 
@@ -89,6 +201,9 @@ list_manip_dsl = {
 # Use this class to execute programs written in the DSL.
 class Interpreter:
     def __init__(self) -> None:
+        """
+        Initialize the parser.
+        """
         self.parser = list_manip_dsl
 
     def __call__(self, statement_string: str):
@@ -113,17 +228,14 @@ interpreter = Interpreter()
 generation_template = {"function_template": "NONE", "output": "NONE", "input": []}
 
 
-# Each of the generate function is used to generate a
-# template for a given function
-# if chosen while sampling the dataset.
-# each function takes in expressions based on the grammar and generates a template.
-# Example: gen_take() generates a template for the take function.
-# take function has two arguments,
-# list_expression and a bounded integer(Should not be more
-# than the length of the list)..
-
-
 def gen_take(expr1=None, expr2=None):
+    """
+    Args:
+        expr1: A list of numbers.
+        expr2: A number.
+    Returns:
+        A list of numbers.
+    """
     if expr1 == None:
         expr1 = init_random_input()
     if expr2 == None:
@@ -138,6 +250,14 @@ def gen_take(expr1=None, expr2=None):
 
 
 def gen_drop(expr1=None, expr2=None):
+    """
+    Drop the first n elements of a list.
+    Args:
+        expr1: A list of elements.
+        expr2: The number of elements to drop.
+    Returns:
+        A list of elements.
+    """
     if expr1 == None:
         expr1 = init_random_input()
     if expr2 == None:
@@ -152,6 +272,15 @@ def gen_drop(expr1=None, expr2=None):
 
 
 def gen_minimum(expr1=None):
+    """
+    Args:
+        expr1: A string representing a mathematical expression.
+    Returns:
+        A dictionary containing the following keys:
+            "function_template": A string representing a mathematical expression.
+            "output": The result of evaluating the "function_template".
+            "input": A list of strings representing mathematical expressions.
+    """
     if expr1 == None:
         expr1 = init_random_input()
 
@@ -164,6 +293,15 @@ def gen_minimum(expr1=None):
 
 
 def gen_maximum(expr1=None):
+    """
+    Args:
+        expr1: A valid python expression.
+    Returns:
+        A dictionary containing the following keys:
+            "function_template": A string representing the function to be generated.
+            "output": The output of the function.
+            "input": The input of the function.
+    """
     if expr1 == None:
         expr1 = init_random_input()
 
@@ -176,6 +314,15 @@ def gen_maximum(expr1=None):
 
 
 def gen_reverse(expr1=None):
+    """
+    Args:
+        expr1: A string representing a valid python expression.
+    Returns:
+        A dictionary containing the following keys:
+            "function_template": A string representing a valid python function.
+            "output": The output of the function.
+            "input": The input of the function.
+    """
     if expr1 == None:
         expr1 = init_random_input()
 
@@ -188,6 +335,12 @@ def gen_reverse(expr1=None):
 
 
 def gen_sort_asc(expr1=None):
+    """
+    Args:
+        expr1: A list of numbers.
+    Returns:
+        A list of numbers sorted in ascending order.
+    """
     if expr1 == None:
         expr1 = init_random_input()
 
@@ -200,6 +353,12 @@ def gen_sort_asc(expr1=None):
 
 
 def gen_sort_des(expr1=None):
+    """
+    Args:
+        expr1: A list of numbers.
+    Returns:
+        A list of numbers sorted in descending order.
+    """
     if expr1 == None:
         expr1 = init_random_input()
 
@@ -212,6 +371,13 @@ def gen_sort_des(expr1=None):
 
 
 def gen_add_n(expr1=None, expr2=None):
+    """
+    Args:
+        expr1: The first expression.
+        expr2: The second expression.
+    Returns:
+        The result of the addition.
+    """
     if expr1 == None:
         expr1 = init_random_input()
     if expr2 == None:
@@ -226,6 +392,13 @@ def gen_add_n(expr1=None, expr2=None):
 
 
 def gen_sub_n(expr1=None, expr2=None):
+    """
+    Args:
+        expr1: The first expression.
+        expr2: The second expression.
+    Returns:
+        The result of the subtraction.
+    """
     if expr1 == None:
         expr1 = init_random_input()
     if expr2 == None:
@@ -240,6 +413,16 @@ def gen_sub_n(expr1=None, expr2=None):
 
 
 def gen_mul_n(expr1=None, expr2=None):
+    """
+    Args:
+        expr1: A valid python expression.
+        expr2: A valid python expression.
+    Returns:
+        A dictionary containing the following keys:
+            "function_template": A string representing the function template.
+            "output": The output of the function.
+            "input": A list of the input values.
+    """
     if expr1 == None:
         expr1 = init_random_input()
     if expr2 == None:
@@ -254,6 +437,16 @@ def gen_mul_n(expr1=None, expr2=None):
 
 
 def gen_div_n(expr1=None, expr2=None):
+    """
+    Args:
+        expr1: a valid python expression.
+        expr2: a valid python expression.
+    Returns:
+        A dictionary containing the following keys:
+            "function_template": a string representing the function template.
+            "output": the output of the function.
+            "input": a list of the function's input.
+    """
     if expr1 == None:
         expr1 = init_random_input()
     if expr2 == None:
@@ -268,6 +461,13 @@ def gen_div_n(expr1=None, expr2=None):
 
 
 def gen_expand_copy(expr1=None, expr2=None):
+    """
+    Args:
+        expr1: A string representing a mathematical expression.
+        expr2: An integer representing the number of times to copy the expression.
+    Returns:
+        A string representing the expanded expression.
+    """
     if expr1 == None:
         expr1 = init_random_input()
     if expr2 == None:
@@ -304,6 +504,13 @@ class Sampler:
         code_sep: str = ";",
         interpreter_sep: str = "->",
     ):
+        """
+        Initialize the class.
+        Args:
+            max_sample_length: The maximum length of the sample.
+            code_sep: The separator between the code.
+            interpreter_sep: The separator between the interpreter.
+        """
         self.max_sample_length = max_sample_length
         self.parser = Interpreter()
         self.production_list = list_manip_dsl
@@ -313,6 +520,13 @@ class Sampler:
         self.interpreter_sep = interpreter_sep
 
     def sample_production(self, gen_length: int = 5):
+        """
+        Generate a list of hash functions.
+        Args:
+            gen_length: The length of the list of hash functions.
+        Returns:
+            A list of hash functions.
+        """
         init_flag = True
         hash_functions = []
         if gen_length == None:
@@ -337,6 +551,17 @@ class Sampler:
 
 
 def create_synthetic_dataset(size: int, io_size=3) -> dict:
+    """
+    Args:
+        size: The number of samples to generate.
+        io_size: The number of inputs and outputs to generate.
+    Returns:
+        A list of dictionaries, each dictionary contains the following keys:
+            "input": The input string.
+            "output": The output string.
+            "io_inp": The input list.
+            "io_out": The output list.
+    """
     output_list = []
     sampler = Sampler()
     for i in tqdm(range(size)):
@@ -363,6 +588,12 @@ def create_synthetic_dataset(size: int, io_size=3) -> dict:
 
 
 def write_to_json(data: dict, file_name: str):
+    """
+    Write data to a json file.
+    Args:
+        data: The data to write.
+        file_name: The file name.
+    """
     with open(file_name, "w") as f:
         json.dump(data, f, indent=2)
 

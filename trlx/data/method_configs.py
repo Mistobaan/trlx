@@ -13,6 +13,11 @@ def register_method(name):
     """
 
     def register_class(cls, name):
+        """Register a class.
+        Args:
+            cls: The class to register.
+            name: The name to register the class under.
+        """
         _METHODS[name] = cls
         setattr(sys.modules[__name__], name, cls)
         return cls
@@ -42,6 +47,12 @@ class MethodConfig:
 
     @classmethod
     def from_dict(cls, config: Dict[str, Any]):
+        """
+        Args:
+            config: A dictionary of configuration parameters.
+        Returns:
+            An instance of the class.
+        """
         return cls(**config)
 
 

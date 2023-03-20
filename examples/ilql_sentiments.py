@@ -16,6 +16,10 @@ def get_positive_score(scores):
 
 
 def main(hparams={}):
+    """
+    Args:
+        hparams: A dictionary of hyperparameters.
+    """
     # Merge sweep config with default config if given
     config = TRLConfig.update(default_ilql_config().to_dict(), hparams)
 

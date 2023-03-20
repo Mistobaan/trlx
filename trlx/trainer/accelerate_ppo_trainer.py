@@ -208,6 +208,10 @@ class AcceleratePPOTrainer(AccelerateRLTrainer):
         return loss, stats
 
     def setup_rollout_logging(self, config):
+        """
+        Args:
+            config: A configuration object.
+        """
         # Make rollout logging dir for this run and store config
         exists = os.path.exists(config.train.rollout_logging_dir)
         isdir = os.path.isdir(config.train.rollout_logging_dir)
@@ -232,9 +236,15 @@ class AcceleratePPOTrainer(AccelerateRLTrainer):
         self.make_experience(self.config.method.num_rollouts, self.iter_count)
 
     def post_backward_callback(self):
+        """
+        This function is called after the backward pass.
+        """
         self.kl_ctl.update(self.mean_kl.item(), n_steps=self.config.train.batch_size)
 
     def prepare_learning(self):
+        """
+        Prepare the learning process.
+        """
         eval_dataloader = self.eval_pipeline.create_loader(self.config.train.batch_size)
         self.eval_dataloader = self.accelerator.prepare_data_loader(eval_dataloader)
         self.train_dataloader = self.store.create_loader(self.config.train.batch_size, shuffle=True)
@@ -300,7 +310,10 @@ class AcceleratePPOTrainer(AccelerateRLTrainer):
                 samples, dim=1, pad_index=self.tokenizer.eos_token_id, pad_first=False
             )
             padded_prompts = self.accelerator.pad_across_processes(
-                prompt_tensors, dim=1, pad_index=self.tokenizer.eos_token_id, pad_first=False
+                prompt_tensors,
+                dim=1,
+                pad_index=self.tokenizer.eos_token_id,
+                pad_first=False,
             )
             gathered_samples = self.accelerator.gather(padded_samples)
             gathered_prompts = self.accelerator.gather(padded_prompts)

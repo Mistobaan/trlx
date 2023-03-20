@@ -43,6 +43,13 @@ class AccelerateRLTrainer(BaseRLTrainer):
     """
 
     def __init__(self, config, **kwargs):  # noqa: C901
+        """
+        Initialize the trainer.
+
+        Args:
+            config (Config): The configuration object.
+            **kwargs: Additional keyword arguments.
+        """  # noqa: C901
         super().__init__(config, **kwargs)
         self.max_length = config.train.seq_length
         self.accelerator = Accelerator(log_with=config.train.tracker, logging_dir=config.train.logging_dir)

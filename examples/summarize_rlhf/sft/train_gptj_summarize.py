@@ -14,6 +14,11 @@ from transformers import (
 
 
 def set_seed(seed_val=42):
+    """
+    Sets the seed for generating random numbers.
+    Args:
+        seed_val: The seed value.
+    """
     random.seed(seed_val)
     np.random.seed(seed_val)
     torch.manual_seed(seed_val)
@@ -59,6 +64,13 @@ if __name__ == "__main__":
     rouge = evaluate.load("rouge")
 
     def compute_metrics(eval_preds):
+        """
+        Compute the rouge score for the given predictions.
+        Args:
+            eval_preds: A list of predictions.
+        Returns:
+            A dictionary containing the rouge score.
+        """
         labels_ids = eval_preds.label_ids
         pred_ids = eval_preds.predictions
         pred_str = tokenizer.batch_decode(pred_ids, skip_special_tokens=True)
@@ -66,8 +78,14 @@ if __name__ == "__main__":
         result = rouge.compute(predictions=pred_str, references=label_str)
         return result
 
-    # Create a preprocessing function to extract out the proper logits from the model output
     def preprocess_logits_for_metrics(logits, labels):
+        """
+        Args:
+            logits: A float32 tensor with shape [batch_size, num_classes].
+            labels: A int32 tensor with shape [batch_size].
+        Returns:
+            A float32 tensor with shape [batch_size, num_classes].
+        """
         if isinstance(logits, tuple):
             logits = logits[0]
         return logits.argmax(dim=-1)

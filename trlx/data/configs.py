@@ -71,6 +71,12 @@ class ModelConfig:
 
     @classmethod
     def from_dict(cls, config: Dict[str, Any]):
+        """
+        Args:
+            config: A dictionary of configuration parameters.
+        Returns:
+            An instance of the class.
+        """
         return cls(**config)
 
 
@@ -95,6 +101,12 @@ class TokenizerConfig:
 
     @classmethod
     def from_dict(cls, config: Dict[str, Any]):
+        """
+        Args:
+            config: A dictionary of configuration parameters.
+        Returns:
+            An instance of the class.
+        """
         return cls(**config)
 
 
@@ -115,6 +127,12 @@ class OptimizerConfig:
 
     @classmethod
     def from_dict(cls, config: Dict[str, Any]):
+        """
+        Args:
+            config: A dictionary of configuration parameters.
+        Returns:
+            An instance of the class.
+        """
         return cls(**config)
 
 
@@ -135,6 +153,12 @@ class SchedulerConfig:
 
     @classmethod
     def from_dict(cls, config: Dict[str, Any]):
+        """
+        Args:
+            config: A dictionary of configuration parameters.
+        Returns:
+            An instance of the class.
+        """
         return cls(**config)
 
 
@@ -225,6 +249,12 @@ class TrainConfig:
 
     @classmethod
     def from_dict(cls, config: Dict[str, Any]):
+        """
+        Args:
+            config: A dictionary of configuration parameters.
+        Returns:
+            An instance of the class.
+        """
         return cls(**config)
 
 
@@ -294,6 +324,16 @@ class TRLConfig:
 
     @classmethod
     def update(cls, baseconfig: Dict, config: Dict):
+        """
+        Update a config dict with the values from another config dict.
+        Args:
+            baseconfig: The base config dict.
+            config: The config dict to update the base config with.
+        Returns:
+            The updated config dict.
+        Raises:
+            ValueError: If a parameter is not present in the base config.
+        """
         if not isinstance(baseconfig, Dict):
             baseconfig = baseconfig.to_dict()
 

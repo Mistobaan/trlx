@@ -14,6 +14,10 @@ from trlx.data.default_configs import (
 
 
 def main(hparams):
+    """
+    Args:
+        hparams: A dict of hyperparameters.
+    """
     config = TRLConfig.update(default_config, hparams)
 
     metric_fn, eval_prompts, walks, _ = generate_random_walks(seed=config.train.seed)

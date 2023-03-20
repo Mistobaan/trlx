@@ -9,6 +9,13 @@ from transformers import AutoTokenizer, Trainer, TrainingArguments
 
 
 def create_comparison_dataset(path="CarperAI/openai_summarize_comparisons", split="train"):
+    """
+    Args:
+        path: path to the dataset
+        split: train/valid/test
+    Returns:
+        pairs: list of pairs of summaries
+    """
     dataset = load_dataset(path, split=split)
     pairs = []
     for sample in tqdm(dataset):
@@ -28,6 +35,14 @@ def create_comparison_dataset(path="CarperAI/openai_summarize_comparisons", spli
 
 class PairwiseDataset(Dataset):
     def __init__(self, pairs, tokenizer, max_length):
+        """
+        Args:
+            pairs: list of dicts, each dict contains the following keys:
+                "chosen": str, the chosen sentence
+                "rejected": str, the rejected sentence
+            tokenizer: a tokenizer object from the transformers library
+            max_length: int, the maximum length of the input sequence
+        """
         self.chosen_input_ids = []
         self.chosen_attn_masks = []
         self.rejected_input_ids = []
@@ -54,9 +69,16 @@ class PairwiseDataset(Dataset):
             self.rejected_attn_masks.append(rejected_encodings_dict["attention_mask"])
 
     def __len__(self):
+        """Return the number of input ids chosen for the current batch."""
         return len(self.chosen_input_ids)
 
     def __getitem__(self, idx):
+        """
+        Args:
+            idx: Index of the item to be fetched.
+        Returns:
+            A tuple of the form (chosen_input_ids, chosen_attn_masks, rejected_input_ids, rejected_attn_masks)
+        """
         return (
             self.chosen_input_ids[idx],
             self.chosen_attn_masks[idx],
@@ -67,6 +89,12 @@ class PairwiseDataset(Dataset):
 
 class DataCollatorReward:
     def __call__(self, data):
+        """
+        Args:
+            data: list of tuples (input_ids, attention_mask, input_ids, attention_mask)
+        Returns:
+            batch: dict with keys "input_ids", "attention_mask", "labels"
+        """
         batch = {}
         batch["input_ids"] = torch.cat([f[0] for f in data] + [f[2] for f in data])
         batch["attention_mask"] = torch.cat([f[1] for f in data] + [f[3] for f in data])
@@ -75,6 +103,13 @@ class DataCollatorReward:
 
 
 def compute_metrics(eval_preds):
+    """
+    Compute the accuracy of the model.
+    Args:
+        eval_preds: A list of tuples (chosen_end_scores, rejected_end_scores)
+    Returns:
+        A dictionary with the accuracy of the model.
+    """
     chosen_end_scores = eval_preds.predictions[0]  # chosen scores
     rejected_end_scores = eval_preds.predictions[1]  # rejected scores
 

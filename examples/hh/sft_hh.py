@@ -39,11 +39,26 @@ default_config = TRLConfig(
 
 
 def preprocess(sample):
+    """
+    Args:
+        sample: a dictionary with the following keys:
+            "prompt": a string
+            "chosen": a string
+    Returns:
+        a dictionary with the following keys:
+            "prompt": a string
+            "chosen": a string
+            "chosen_sample": a string
+    """
     sample["chosen_sample"] = sample["prompt"] + sample["chosen"]
     return sample
 
 
 def main(hparams={}):
+    """
+    Args:
+        hparams: A dict of hyperparameters.
+    """
     config = TRLConfig.update(default_config, hparams)
 
     dataset = load_dataset("Dahoas/full-hh-rlhf").map(preprocess)

@@ -16,14 +16,16 @@ except ImportError:
     HAS_BNB = False
 
 
-# Test general utils
-
-
 @pytest.mark.parametrize(
     "optimizer_name",
     [o.value for o in utils.OptimizerName],
 )
 def test_optimizer_class_getters(optimizer_name: str):
+    """
+    Test that the optimizer class getters work as expected.
+    Args:
+        optimizer_name: The name of the optimizer to test.
+    """
     try:
         _class = utils.get_optimizer_class(optimizer_name)
     except Exception as e:
@@ -42,6 +44,10 @@ def test_optimizer_class_getters(optimizer_name: str):
     [o.value for o in utils.SchedulerName],
 )
 def test_scheduler_class_getters(scheduler_name: str):
+    """
+    Args:
+        scheduler_name: The name of the scheduler.
+    """
     try:
         _class = utils.get_scheduler_class(scheduler_name)
     except Exception as e:
@@ -50,9 +56,6 @@ def test_scheduler_class_getters(scheduler_name: str):
     # Hard-check for one of the schedulers
     _class = utils.get_scheduler_class("cosine_annealing")
     assert _class == torch.optim.lr_scheduler.CosineAnnealingLR
-
-
-# Test modeling utils
 
 
 @pytest.mark.parametrize(
@@ -65,6 +68,9 @@ def test_scheduler_class_getters(scheduler_name: str):
     ],
 )
 def test_hf_attr_getters(model_name: str):
+    """
+    Test that the attribute getters work for the HF models.
+    """
     with accelerate.init_empty_weights():
         config = transformers.AutoConfig.from_pretrained(model_name)
         arch = transformers.AutoModelForCausalLM.from_config(config)
@@ -103,6 +109,9 @@ def test_hf_attr_getters(model_name: str):
     ],
 )
 def test_parse_delta_kwargs(model_name):
+    """
+    Test that the default modified modules are parsed correctly for each model type.
+    """
     config = transformers.AutoConfig.from_pretrained(model_name)
 
     modified_modules_dict = modeling_utils.MODIFIED_MODULES_DICT[config.model_type]
@@ -132,6 +141,9 @@ def test_parse_delta_kwargs(model_name):
 class TestStatistics(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        """
+        This function is called before all tests in an individual class are run.
+        """
         cls.m = modeling_utils.RunningMoments()
         cls.a1 = torch.arange(100, dtype=float)
         cls.a2 = torch.ones(100, dtype=float)
@@ -139,6 +151,12 @@ class TestStatistics(unittest.TestCase):
         cls.a4 = torch.tensor([-10, -1, 0, 1, 10], dtype=float)
 
     def test_running_moments(self):
+        """
+        Args:
+            self:
+        Returns:
+            None
+        """
         assert torch.isclose(self.m.update(self.a1)[1], self.a1.std(unbiased=True), atol=1e-6)
         assert torch.isclose(self.m.update(self.a2)[1], self.a2.std(unbiased=True), atol=1e-6)
         assert torch.isclose(self.m.update(self.a3)[1], self.a3.std(unbiased=True), atol=1e-6)

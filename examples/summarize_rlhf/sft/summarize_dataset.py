@@ -7,6 +7,14 @@ from torch.utils.data import Dataset
 
 
 def get_dataset_from_jsonl(jsonl_file, return_summary=True):
+    """
+    Args:
+        jsonl_file: a jsonl file containing the dataset
+        return_summary: if True, return a list of posts with summary concatenated
+                        if False, return a list of posts and a list of summaries
+    Returns:
+        a list of posts and a list of summaries
+    """
     # if return_summary is True, return a list of posts with summary concatenated
     # if return_summary is False, return a list of posts and a list of summaries
     with open(jsonl_file, "r") as f:
@@ -27,6 +35,13 @@ def get_dataset_from_jsonl(jsonl_file, return_summary=True):
 
 class TLDRDataset(Dataset):
     def __init__(self, train_path, tokenizer, split, max_length=550):
+        """
+        Args:
+            train_path: path to the training data
+            tokenizer: tokenizer to use
+            split: train/valid/test
+            max_length: maximum length of the input sequence
+        """
         self.post_list = []
         dataset = load_dataset(train_path, split=split)
         for sample in dataset:
@@ -39,9 +54,16 @@ class TLDRDataset(Dataset):
         self.attn_masks = []
 
     def __len__(self):
+        """Return the number of posts in the blog."""
         return len(self.post_list)
 
     def __getitem__(self, idx):
+        """
+        Args:
+            idx: the index of the item in the dataset
+        Returns:
+            a dictionary of the data
+        """
         txt = self.post_list[idx]
         encodings_dict = self.tokenizer(txt, truncation=True, max_length=self.max_length, padding="max_length")
         input_ids = torch.tensor(encodings_dict["input_ids"])
@@ -56,6 +78,12 @@ class TLDRDataset(Dataset):
 
 class ComparisonDataset(Dataset):
     def __init__(self, comparison_path, tokenizer, max_length=550):
+        """
+        Args:
+            comparison_path: path to the comparison file
+            tokenizer: tokenizer to use
+            max_length: maximum length of the input sequence
+        """
         with open(comparison_path, "r") as f:
             dataset = [json.loads(line) for line in f]
 
@@ -81,9 +109,16 @@ class ComparisonDataset(Dataset):
             self.labels.append(0)
 
     def __len__(self):
+        """Return the number of posts in the blog."""
         return len(self.post_list)
 
     def __getitem__(self, idx):
+        """
+        Args:
+            idx: index of the item in the dataset
+        Returns:
+            a dictionary of the data and label
+        """
         summ0 = self.summaries_0[idx]
         summ1 = self.summaries_1[idx]
         encodings_dict = self.tokenizer(
@@ -99,6 +134,13 @@ class ComparisonDataset(Dataset):
 
 class AllSummDataset(Dataset):
     def __init__(self, train_path, tokenizer, split, max_length=1024):
+        """
+        Args:
+            train_path: Path to the training data.
+            tokenizer: Tokenizer to use.
+            split: Split to use.
+            max_length: Maximum length of the input.
+        """
         df = pd.read_parquet(train_path)
         if split == "valid":
             df = df.sample(n=5000)
@@ -111,9 +153,16 @@ class AllSummDataset(Dataset):
         self.attn_masks = []
 
     def __len__(self):
+        """Return the number of rows in the table."""
         return len(self.summarizes)
 
     def __getitem__(self, idx):
+        """
+        Args:
+            idx: index of the item in the dataset
+        Returns:
+            a dictionary of the data
+        """
         txt = self.summarizes[idx]
         encodings_dict = self.tokenizer(txt, truncation=True, max_length=self.max_length, padding="max_length")
         input_ids = torch.tensor(encodings_dict["input_ids"])

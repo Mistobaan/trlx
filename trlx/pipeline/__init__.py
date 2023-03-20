@@ -18,6 +18,11 @@ def register_datapipeline(name):
     """
 
     def register_class(cls, name):
+        """Register a class.
+        Args:
+            cls: The class to register.
+            name: The name to register the class under.
+        """
         _DATAPIPELINE[name] = cls
         setattr(sys.modules[__name__], name, cls)
         return cls
@@ -36,14 +41,29 @@ def register_datapipeline(name):
 @register_datapipeline
 class BasePipeline(Dataset):
     def __init__(self, path: str = "dataset"):
+        """
+        Initialize the dataset.
+        Args:
+            path: The path to the dataset.
+        """
         super().__init__()
 
     @abstractmethod
     def __getitem__(self, index: int) -> GeneralElement:
+        """
+        Returns the element at the given index.
+        Args:
+            index: The index of the element to return.
+        Returns:
+            The element at the given index.
+        Raises:
+            IndexError: If the index is out of range.
+        """
         pass
 
     @abstractmethod
     def __len__(self) -> int:
+        """Return the number of items in the container."""
         pass
 
     @abstractmethod
@@ -64,6 +84,11 @@ class BasePipeline(Dataset):
 
 class BaseRolloutStore(Dataset):
     def __init__(self, capacity=-1):
+        """
+        Initialize a new History object.
+        Args:
+            capacity: The maximum number of items to store in the history.
+        """
         self.history: Iterable[Any] = None
         self.capacity = capacity
 
@@ -75,9 +100,18 @@ class BaseRolloutStore(Dataset):
         pass
 
     def __getitem__(self, index: int) -> RLElement:
+        """
+        Args:
+            index: The index of the element to return.
+        Returns:
+            The element at the given index.
+        Raises:
+            IndexError: If the index is out of range.
+        """
         return self.history[index]
 
     def __len__(self) -> int:
+        """Return the number of elements in the history."""
         return len(self.history)
 
     @abstractmethod

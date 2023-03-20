@@ -20,6 +20,15 @@ logging.set_verbosity(logging.ERROR)
 
 
 def get_default_train_and_eval_prompts() -> Mapping[str, List[str]]:
+    """
+    Returns a dictionary with the default training and evaluation prompts.
+    Args:
+        None
+    Returns:
+        A dictionary with the default training and evaluation prompts.
+    Raises:
+        None
+    """
     return dict(
         train=[
             "The quick brown fox jumps over the lazy",
@@ -36,6 +45,14 @@ def get_default_train_and_eval_prompts() -> Mapping[str, List[str]]:
 
 
 def get_default_reward_fn():
+    """
+    Returns a reward function that returns the number of times the word "dog" appears in a sample.
+    Args:
+        samples: A list of strings.
+    Returns:
+        A list of integers.
+    """
+
     def reward_fn(samples: List[str], **kwargs):
         return [sample.count("dog") for sample in samples]
 
@@ -44,11 +61,17 @@ def get_default_reward_fn():
 
 class TestAccelerateBaseTrainer(unittest.TestCase):
     def setUp(self) -> None:
+        """
+        Set up the test.
+        """
         super().setUp()
         self.prompt_dataset = get_default_train_and_eval_prompts()
 
     @classmethod
     def get_default_config(cls):
+        """
+        Returns the default configuration for the class.
+        """
         return TRLConfig(
             train=TrainConfig(
                 seq_length=16,
@@ -95,6 +118,12 @@ class TestAccelerateBaseTrainer(unittest.TestCase):
         )
 
     def get_trainer(self, config: TRLConfig):
+        """
+        Args:
+            config: The configuration for the trainer.
+        Returns:
+            The trainer.
+        """
         trainer = get_trainer(config.train.trainer)(
             config=config,
             reward_fn=get_default_reward_fn(),
@@ -117,6 +146,9 @@ class TestAccelerateBaseTrainer(unittest.TestCase):
         return trainer
 
     def test_save_checkpoint(self):
+        """
+        Test that the trainer saves checkpoints at the correct intervals.
+        """
         with tempfile.TemporaryDirectory() as tmpdir:
             config = self.get_default_config()
             config.train.checkpoint_dir = tmpdir

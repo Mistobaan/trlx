@@ -10,6 +10,14 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 
 def load_model(path):
+    """
+    Loads a model from a given path.
+    Args:
+        path (str): The path to the model.
+    Returns:
+        model (torch.nn.Module): The model.
+        tokenizer (transformers.tokenization_utils.PreTrainedTokenizer): The tokenizer.
+    """
     tokenizer = AutoTokenizer.from_pretrained("EleutherAI/gpt-j-6B")
     model = AutoModelForCausalLM.from_pretrained(path)
     model.config.pad_token_id = tokenizer.bos_token_id
@@ -37,6 +45,12 @@ rw_model.to(rw_device)
 
 
 def reward_fn(samples):
+    """
+    Args:
+        samples: a list of strings.
+    Returns:
+        scores: a torch.Tensor of shape (len(samples), 2).
+    """
     scores_list = []
     batch_size = 2
     for i in range(0, len(samples), batch_size):
@@ -61,6 +75,13 @@ def reward_fn(samples):
 
 
 def inference(model, tokenizer):
+    """
+    Args:
+        model: The model to be used for inference.
+        tokenizer: The tokenizer to be used for inference.
+    Returns:
+        df: A dataframe containing the predicted summary, the ground truth summary and the post.
+    """
     model.to("cuda")
     model.eval()
 
@@ -91,6 +112,16 @@ def inference(model, tokenizer):
 
 
 def inference_batches(model, tokenizer, test_post_list, test_summ_list, batch_size=16):
+    """
+    Args:
+        model: The model to be used for inference.
+        tokenizer: The tokenizer to be used for inference.
+        test_post_list: A list of posts to be used for inference.
+        test_summ_list: A list of summaries to be used for inference.
+        batch_size: The batch size to be used for inference.
+    Returns:
+        df: A dataframe containing the predictions, truths, and input posts.
+    """
     model.to("cuda")
     model.eval()
 

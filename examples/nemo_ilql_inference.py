@@ -30,12 +30,23 @@ trl_config = default_config.evolve(
 
 
 def find_checkpoints(checkpoint_dir):
+    """
+    Args:
+        checkpoint_dir: The directory where the checkpoints are stored.
+    Returns:
+        A set of all the checkpoint names.
+    """
     checkpoints = glob(os.path.join(checkpoint_dir, "*", "*.ckpt"))
     names = [os.path.basename(c) for c in checkpoints]
     return set(names)
 
 
 def main(megatron_cfg_path, checkpoint_path):
+    """
+    Args:
+        megatron_cfg_path: Path to the megatron config file.
+        checkpoint_path: Path to the checkpoint.
+    """
     ilql_config = trl_config.method
 
     megatron_cfg = OmegaConf.load(megatron_cfg_path)
