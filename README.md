@@ -1,4 +1,3 @@
-
 [![DOI](https://zenodo.org/badge/545104023.svg)](https://zenodo.org/badge/latestdoi/545104023)
 
 # Transformer Reinforcement Learning X

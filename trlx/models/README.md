@@ -1,18 +1,25 @@
 ## Using pretrained NeMo models
+
 To use a NeMo models in `.nemo` format, like [NeMo Megatron-GPT-20B](https://huggingface.co/nvidia/nemo-megatron-gpt-20B), download and un-tar it:
+
 ```
 tar xvf nemo_gpt20B_bf16_tp4.nemo
 ```
+
 This will extract the model weights and the model config.
 
 Then set `train.trainer_kwargs.pretrained_model` to the path to the directory containing the parameters. The model hyperparameters in the `train.trainer_kwargs.megatron_cfg` should match the ones in the model config.
 
 ## Inference ILQL trained NeMo models
+
 To load a checkpoint, run
+
 ```
 python examples/nemo_ilql_inference.py configs/nemo_configs/megatron_20b.yaml "/path/to/ilql_sentiments_logs/checkpoints"
 ```
+
 To save checkpoints, ensure the following is set in the NeMo config:
+
 ```
 exp_manager:
   explicit_log_dir: ilql_sentiments_logs
@@ -20,42 +27,49 @@ exp_manager:
 ```
 
 ## Resume Training
+
 To resume training, ensure the following is set in the NeMo config:
+
 ```
 exp_manager:
   resume_if_exists: True
 ```
 
 ## NeMo Megatron setup
+
 Clone https://github.com/NVIDIA/NeMo/tree/r1.15.0 (currently only up to `r1.15.0` is supoprted) and apex from https://github.com/NVIDIA/apex/.
 
-1) install conda (or mamba/micromamba)
+1. install conda (or mamba/micromamba)
 
-2) srun into a compute node with a gpu (if running on HPC cluster)
+1. srun into a compute node with a gpu (if running on HPC cluster)
+
 ```
 srun --pty bash -i
 ```
 
-3) copy the conda env export below and change the name and prefix
+3. copy the conda env export below and change the name and prefix
+
 ```
 conda env create -f env.yaml
 ```
 
-4) install nemo
+4. install nemo
+
 ```
 git clone https://github.com/NVIDIA/NeMo/
 cd NeMo && pip install '.[all]'
 ```
 
-6) install apex (or clone the github)
+6. install apex (or clone the github)
+
 ```
 git clone https://github.com/NVIDIA/apex/
 cd apex
 pip install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" --global-option="--fast_layer_norm" --global-option="--distributed_adam" --global-option="--deprecated_fused_adam" ./
 ```
 
-
 # conda env export
+
 ```
 name: nemo-113
 prefix: /mnt/nvme/jobs/nemo/nemo-source

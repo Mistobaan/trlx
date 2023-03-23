@@ -17,35 +17,47 @@ To submit a bug report or a feature request, please open an [issue](https://gith
 Follow these steps to start contributing code:
 
 1. Create your own [fork](https://docs.github.com/en/get-started/quickstart/fork-a-repo#forking-a-repository) of the repository and clone it to your local machine.
-    ```bash
-    git clone https://github.com/<YOUR-USERNAME>/trlx.git
-    cd trlx
-    git remote add upstream https://github.com/CarperAI/trlx.git
-    ```
-2. Create a new branch for your changes and give it a concise name that reflects your contribution.
-    ```bash
-    git checkout -b <BRANCH-NAME>
-    ```
-2. Install the development dependencies in a Python environment.
-    ```bash
-    pip install -e ".[dev]"
-    pre-commit install
-    ```
-4. Implement your changes. Make small, independent, and well documented commits along the way (check out [these](https://cbea.ms/git-commit/) tips).
-5. Add unit tests whenever appropriate and ensure that the tests pass. To run the entire test suite, use the following command from within the project root directory.
-    ```bash
-    pytest
-    ```
-    For changes with minimal project scope (e.g. a simple bug fix), you might want to run the unit tests for just a specific test file instead:
-    ```bash
-    pytest -vv -k "<TEST-FILE-NAME>"
-    ```
-5. Commit your final changes. Our `pre-commit` hooks will automatically run before each commit and will prevent you from committing code that does not pass our style and linter checks. They'll also automatically format your code! To run these manually, use the following command:
-    ```bash
-    pre-commit run --all-files
-    ```
 
-6. Push the changes to your fork.
+   ```bash
+   git clone https://github.com/<YOUR-USERNAME>/trlx.git
+   cd trlx
+   git remote add upstream https://github.com/CarperAI/trlx.git
+   ```
+
+1. Create a new branch for your changes and give it a concise name that reflects your contribution.
+
+   ```bash
+   git checkout -b <BRANCH-NAME>
+   ```
+
+1. Install the development dependencies in a Python environment.
+
+   ```bash
+   pip install -e ".[dev]"
+   pre-commit install
+   ```
+
+1. Implement your changes. Make small, independent, and well documented commits along the way (check out [these](https://cbea.ms/git-commit/) tips).
+
+1. Add unit tests whenever appropriate and ensure that the tests pass. To run the entire test suite, use the following command from within the project root directory.
+
+   ```bash
+   pytest
+   ```
+
+   For changes with minimal project scope (e.g. a simple bug fix), you might want to run the unit tests for just a specific test file instead:
+
+   ```bash
+   pytest -vv -k "<TEST-FILE-NAME>"
+   ```
+
+1. Commit your final changes. Our `pre-commit` hooks will automatically run before each commit and will prevent you from committing code that does not pass our style and linter checks. They'll also automatically format your code! To run these manually, use the following command:
+
+   ```bash
+   pre-commit run --all-files
+   ```
+
+1. Push the changes to your fork.
 
 Finally ... 🥁 ... Create a [pull request](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/creating-a-pull-request) to the `trlX` repository! Make sure to include a description of your changes and link to any relevant issues.
 

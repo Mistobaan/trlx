@@ -3,10 +3,13 @@
 As an example, the following setup assumes a single machine with 8xA100 80GB, the last of which will be dedicated to hosting a reward model. Optionally you can use [Triton Inference Server](https://github.com/triton-inference-server) to host it elsewhere, otherwise the training script will instantiate it ([a default one](https://huggingface.co/Dahoas/gptj-rm-static)) on its own.
 
 Launch training of [GPT-J](https://huggingface.co/EleutherAI/gpt-j-6B) on 7 GPUs with 8th GPU hosting a reward model:
+
 ```sh
 accelerate launch --num_processes 7 --config_file ../../configs/accelerate/zero2-bf16.yaml ppo_hh.py
 ```
+
 Or if you want to train a smaller model or start from a supervised checkpoint, you can use one of the [configs](./configs)
+
 ```sh
 CONFIG_NAME=125M accelerate launch --num_processes 7 --config_file ../../configs/accelerate/zero2-bf16.yaml ppo_hh.py
 ```
